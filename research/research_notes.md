@@ -37,4 +37,7 @@ This file contains notes from literature reviews, with its references.
 - After training, the model is frozen and then used to turn slide images into vector representations
 - The model is trained on lung samples: LUSC and LUAD samples from TCA
 - The dataset is turned into a graph, and then clustering is performed on the graph
-  - m
+  - Each tile is transformed to a tile vector representation (size $R^D, D=128 $).
+  - 200,000 randomly sampled tile vectors from training set is turned into a graph by using k-nearest neighbour ($k=250$)
+  - Use the graph above to find the clusters using `Leiden Community`
+    - Leiden Resolution or $\gamma$ 
