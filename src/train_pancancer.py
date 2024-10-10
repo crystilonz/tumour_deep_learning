@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 
 from data_manipulation.pancancer_from_csv import get_pancancer_data_from_csv, PAN_CANCER_DICT
-from models.pancancer_classifier import PanCancerClassifier
+from models.pan_cancer_classifier import PanCancerClassifier
 from utils.datadump import save_to_json
 from utils.multiclass_evaluate import accuracy, auroc, roc
 from utils.plotting import plot_loss, plot_roc

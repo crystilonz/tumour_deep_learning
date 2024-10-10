@@ -41,3 +41,42 @@ This file contains notes from literature reviews, with its references.
   - 200,000 randomly sampled tile vectors from training set is turned into a graph by using k-nearest neighbour ($k=250$)
   - Use the graph above to find the clusters using `Leiden Community`
     - Leiden Resolution or $\gamma$ 
+
+## Week 2
+
+### AI-based pathology predicts origins for cancers of unknown primary
+
+> https://www.nature.com/articles/s41586-021-03512-4
+
+    @article{lu2021ai,
+    title={AI-based pathology predicts origins for cancers of unknown primary},
+    author={Lu, Ming Y and Chen, Tiffany Y and Williamson, Drew FK and Zhao, Melissa and Shady, Maha and Lipkova, Jana and Mahmood, Faisal},
+    journal={Nature},
+    volume={594},
+    number={7861},
+    pages={106--110},
+    year={2021},
+    publisher={Nature Publishing Group}
+    }
+
+- Model utilising Multi-Instance-Learning (MIL)
+  - Chop up WSI into tiles (like before)
+  - Use pre-trained model based on ResNet50 (truncated ResNet50) which was trained on ImageNet as a feature extractor
+  - from ^ we get size 1024 feature vector for each slide
+  - from ^ put into 2 fully connected layers (new training) to learn histology specific features
+  - We now get a feature vector for each tile in the WSI
+  - in each bag (WSI), pool the feature vectors by using attention based pooling
+  - after attention based pooling, the entire WSI will be reduced to a vector representation
+  - concatenate sex to the vector from ^, then feed to classifier
+- Model uses multitask learning
+  - First task is where the tumour originates (multiclass classification)
+  - Second task is whether the tumour is a primary cancer or metastatic cancer (binary classification)
+  - This is performed by having (partly) different sets of weights for two tasks in the attention pooling
+  - loss function is defined as a linear combination of losses from both task
+    - 0.75(loss from origin classification) + 0.25(loss from metastasis classification)
+- Data is a combination of publicly available data and in-house data
+  - public data like TCGA
+- Classifier is logistic regression
+
+
+  

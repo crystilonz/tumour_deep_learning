@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 from data_manipulation.pancancer_from_csv import get_pancancer_data_from_csv, PAN_CANCER_DICT
-from models.pancancer_classifier import PanCancerClassifier
+from models.pan_cancer_classifier import PanCancerClassifier
 from train_pancancer import DEFAULT_SAVED_MODEL_DIR, DEFAULT_SAVED_MODEL_NAME, train_pan_cancer, DEFAULT_DATA_DIR
 from utils.multiclass_evaluate import accuracy, auroc, roc
 from utils.plotting import plot_roc

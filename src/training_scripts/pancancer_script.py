@@ -1,5 +1,5 @@
 from train_pancancer import train_pan_cancer
-from models.pancancer_classifier import PanCancerClassifier
+from models.pan_cancer_classifier import PanCancerClassifier
 
 if __name__ == '__main__':
     model = PanCancerClassifier(input_size=34,
