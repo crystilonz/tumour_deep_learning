@@ -13,6 +13,8 @@ PAN_CANCER_DICT = {0: "BLCA",
                    8: "STAD",
                    9: "UCEC"}
 
+PAN_CANCER_LABELS: list[str] = [PAN_CANCER_DICT[i] for i in range(0, 10)]
+
 
 def get_pancancer_data_from_csv(dir_path: str):
     file_list = os.listdir(dir_path)
@@ -33,8 +35,9 @@ def get_pancancer_data_from_csv(dir_path: str):
 
 
 if __name__ == '__main__':
-    DATA_DIR = "src/datasets/pancancer_WSI_representation"
+    DATA_DIR = "../datasets/pancancer_WSI_representation"
     samples, slides, tensor, labels = get_pancancer_data_from_csv(DATA_DIR)
-    print(tensor[0])
-    print(labels)
-    print(tensor.shape)
+    for i in range(10):
+        print(f"Number of samples in class {PAN_CANCER_DICT[i]}: {np.sum(labels == i)}")
+
+

@@ -1,5 +1,18 @@
 import matplotlib.pyplot as plt
 from pathlib import Path
+import torch
+import numpy as np
+import seaborn as sn
+import pandas as pd
+from typing import Any, List
+import os
+
+ENV_SHOW_PLOT = os.environ.get('ENV_SHOW_PLOT')
+if ENV_SHOW_PLOT:
+    ENV_SHOW_PLOT = False if ENV_SHOW_PLOT == 'False' else True
+else:
+    ENV_SHOW_PLOT = True
+
 
 def plot_loss(training_loss: [float],
               testing_loss: [float],
@@ -21,7 +34,7 @@ def plot_loss(training_loss: [float],
     if save_to is not None:
         plt.savefig(save_to)
 
-    if show_plot:
+    if show_plot and ENV_SHOW_PLOT:
         plt.show()
 
     plt.close()
@@ -54,10 +67,43 @@ def plot_roc(false_pos,
     if save_to is not None:
         plt.savefig(save_to)
 
-    if show_plot:
+    if show_plot and ENV_SHOW_PLOT:
         plt.show()
 
     plt.close()
+
+def plot_confusion_matrix(cm: np.ndarray | torch.Tensor,
+                          save_to: str | Path = None,
+                          indices: List[Any] = None,
+                          show_plot: bool = True) -> None:
+    if isinstance(cm, torch.Tensor):
+        cm = cm.cpu().numpy()
+
+    if indices is None:
+        indices = range(cm.shape[0])
+
+    df_cm = pd.DataFrame(cm, index=indices, columns=indices)
+    plt.figure(figsize=(8, 8))
+    sn.heatmap(df_cm, annot=True)
+    plt.title("Confusion Matrix")
+    plt.xlabel('Predicted label')
+    plt.ylabel('True label')
+
+    if save_to is not None:
+        plt.savefig(save_to)
+
+    if show_plot and ENV_SHOW_PLOT:
+        plt.show()
+
+    plt.close()
+
+
+
+
+
+
+
+
 
 
 

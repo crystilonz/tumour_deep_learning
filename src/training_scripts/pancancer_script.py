@@ -6,4 +6,4 @@ if __name__ == '__main__':
                                 hidden_size=42,
                                 output_size=10)
     train_pan_cancer(pan_cancer_model=model,
-                     epochs=40)
+                     epochs=50)

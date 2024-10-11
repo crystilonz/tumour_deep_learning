@@ -5,6 +5,6 @@ if __name__ == '__main__':
     model = PanCancerLogisticRegression(input_size=34,
                                         output_size=10)
     train_pan_cancer(model,
-                     epochs=40,
+                     epochs=30,
                      save_dir="logistic_regression",
                      save_name="logistic_regression_checkpoints",)

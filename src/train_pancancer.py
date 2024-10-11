@@ -5,12 +5,12 @@ from torch.utils.data import DataLoader, TensorDataset
 from pathlib import Path
 import numpy as np
 
-from data_manipulation.pancancer_from_csv import get_pancancer_data_from_csv, PAN_CANCER_DICT
+from data_manipulation.pancancer_from_csv import get_pancancer_data_from_csv, PAN_CANCER_DICT, PAN_CANCER_LABELS
 from models.pan_cancer_classifier import PanCancerClassifier
 from utils.datadump import save_to_json
-from utils.multiclass_evaluate import accuracy, auroc, roc
-from utils.plotting import plot_loss, plot_roc
-from utils.training import train_model
+from utils.multiclass_evaluate import accuracy, auroc, roc, confusion_matrix
+from utils.plotting import plot_loss, plot_roc, plot_confusion_matrix
+from utils.training import train_model, save_model
 
 DEFAULT_DATA_DIR = Path(__file__).parent / "datasets" / "pancancer_WSI_representation"
 DEFAULT_SAVED_MODEL_PARENT = Path(__file__).parent / "saved_models"
@@ -20,6 +20,7 @@ DEFAULT_PLOT_NAME = "loss_curve"
 DEFAULT_TRAINING_ROC = "train_roc"
 DEFAULT_TEST_ROC = "test_roc"
 DEFAULT_SAVED_METRIC_NAME = "metrics.json"
+DEFAULT_CONFUSION_MATRIX_NAME = "confusion_matrix"
 DEFAULT_EPOCH = 30
 DEFAULT_HIDDEN_SIZE = 42
 DEFAULT_BATCH_SIZE = 64
@@ -35,7 +36,9 @@ def train_pan_cancer(pan_cancer_model: nn.Module,
                      loss_plot_name: str | Path = DEFAULT_PLOT_NAME,
                      train_roc_name: str | Path = DEFAULT_TRAINING_ROC,
                      test_roc_name: str | Path = DEFAULT_TEST_ROC,
-                     metric_name: str | Path = DEFAULT_SAVED_METRIC_NAME) -> torch.nn.Module:
+                     metric_name: str | Path = DEFAULT_SAVED_METRIC_NAME,
+                     conf_mat_name: str | Path = DEFAULT_CONFUSION_MATRIX_NAME) -> torch.nn.Module:
+
     samples, slides, data, labels = get_pancancer_data_from_csv(datadir)
     training_data, testing_data, training_labels, testing_labels = train_test_split(data,
                                                                                     labels,
@@ -55,8 +58,12 @@ def train_pan_cancer(pan_cancer_model: nn.Module,
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     test_dataloader = DataLoader(test_dataset, batch_size=batch_size)
 
+    # loss weights
+    total_label = len(labels)
+    weights = [total_label/(np.sum(labels == i) * 10) for i in range(10)]
+
     # loss function and optimizer
-    loss_fn = torch.nn.CrossEntropyLoss()
+    loss_fn = torch.nn.CrossEntropyLoss(weight=torch.FloatTensor(weights))
     optimizer = torch.optim.Adam(pan_cancer_model.parameters(),
                                  lr=0.001)
 
@@ -66,14 +73,11 @@ def train_pan_cancer(pan_cancer_model: nn.Module,
                                                   epochs=epochs,
                                                   train_dataloader=train_dataloader,
                                                   test_dataloader=test_dataloader)
-
-    # save plot and model
     save_dir = save_parent / save_dir
-    if not save_dir.exists():
-        save_dir.mkdir(parents=True)
+    # save model checkpoints
+    save_model(pan_cancer_model,
+               save_dir / save_name)
 
-    # save model
-    torch.save(pan_cancer_model.state_dict(), save_dir / save_name)
 
     # plot loss curves
     plot_loss(training_losses, testing_losses,
@@ -105,6 +109,13 @@ def train_pan_cancer(pan_cancer_model: nn.Module,
                                              data=testing_data_tensor,
                                              truth=testing_labels_tensor,
                                              classes=10)
+
+    # confusion
+    conf_mat = confusion_matrix(model=pan_cancer_model,
+                                data=testing_data_tensor,
+                                truth=testing_labels_tensor,
+                                classes=10)
+
     # report metrics
     print(f"Training Dataset")
     print(f"Accuracy: {final_train_acc:.2f}%")
@@ -134,6 +145,10 @@ def train_pan_cancer(pan_cancer_model: nn.Module,
              title="Testing ROC",
              label_dict=PAN_CANCER_DICT,
              save_to=save_dir / test_roc_name)
+
+    plot_confusion_matrix(conf_mat,
+                          save_to=save_dir / conf_mat_name,
+                          indices=PAN_CANCER_LABELS)
 
     return pan_cancer_model
 

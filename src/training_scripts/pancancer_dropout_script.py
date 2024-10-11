@@ -6,6 +6,6 @@ if __name__ == '__main__':
                                            hidden_size=42,
                                            output_size=10)
     train_pan_cancer(model,
-                     epochs=40,
+                     epochs=30,
                      save_dir="pancancer_dropout_model",
                      save_name="pancancer_dropout_checkpoints",)

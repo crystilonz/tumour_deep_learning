@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchmetrics import Accuracy
+from pathlib import Path
 
 
 def training_step(model: nn.Module,
@@ -97,5 +98,19 @@ def train_model(model: nn.Module,
     print(f"After training >>> Training Loss: {training_losses[-1]} | Testing Loss: {testing_losses[-1]}")
 
     return training_losses, testing_losses
+
+
+def save_model(model: nn.Module,
+               save_path: str | Path):
+    if not isinstance(save_path, Path):
+        save_path = Path(save_path)
+
+    if not save_path.parent.exists():
+        save_path.parent.mkdir(parents=True)
+
+    if save_path.suffix != '.pt' and save_path.suffix != '.pth':
+        save_path = save_path.parent / (save_path.stem + '.pt')
+
+    torch.save(model.state_dict(), save_path)
 
 

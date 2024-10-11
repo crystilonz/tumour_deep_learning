@@ -1,21 +1,23 @@
 import torch
 import torch.nn as nn
-from torchmetrics.classification import MulticlassAccuracy, MulticlassAUROC, MulticlassROC
+from torchmetrics.classification import MulticlassAccuracy, MulticlassAUROC, MulticlassROC, MulticlassConfusionMatrix
+from typing import Optional, Literal
 
 
 def accuracy(model: torch.nn.Module,
              data: torch.Tensor,
              truth: torch.Tensor,
-             classes: int = None) -> float:
+             classes: int = None,
+             top_k: int = 1) -> float:
 
     if classes is None:
         classes = len(torch.unique(truth))
 
-    accuracy_fn = MulticlassAccuracy(num_classes=classes)
+    accuracy_fn = MulticlassAccuracy(num_classes=classes, top_k=top_k)
 
     model.eval()
     with torch.no_grad():
-        output = torch.argmax(model(data), dim=1)
+        output = model(data)
         acc = accuracy_fn(output, truth).item()
 
     return acc
@@ -54,6 +56,23 @@ def roc(model: torch.nn.Module,
         fpr, tpr, thresholds = roc_fn(output, truth)
 
     return fpr, tpr, thresholds
+
+def confusion_matrix(model: torch.nn.Module,
+                     data: torch.Tensor,
+                     truth: torch.Tensor,
+                     classes: int = None,
+                     normalize: Optional[Literal["true", "pred", "all", "none"]] = "true"):
+
+    if classes is None:
+        classes = len(torch.unique(truth))
+
+    conf_fn = MulticlassConfusionMatrix(num_classes=classes, normalize=normalize)
+    model.eval()
+    with torch.no_grad():
+        output = model(data)
+        conf_matrix = conf_fn(output, truth)
+
+    return conf_matrix
 
 
 
