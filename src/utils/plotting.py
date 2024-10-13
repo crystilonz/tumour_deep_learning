@@ -28,8 +28,11 @@ def plot_loss(training_loss: [float],
     plt.legend(loc='best')
 
     plt.xlabel('Epochs')
+
     plt.ylabel('Loss')
     plt.title('Loss Curve')
+    plt.ylim(bottom=0)
+    plt.xlim(left=0)
 
     if save_to is not None:
         plt.savefig(save_to)
@@ -63,6 +66,8 @@ def plot_roc(false_pos,
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.legend(loc='best')
+    plt.ylim(bottom=0)
+    plt.xlim(left=0)
 
     if save_to is not None:
         plt.savefig(save_to)

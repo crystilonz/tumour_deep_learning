@@ -117,13 +117,15 @@ def train_pan_cancer(pan_cancer_model: nn.Module,
                                 classes=10)
 
     # report metrics
+    print("------------------------------------")
     print(f"Training Dataset")
-    print(f"Accuracy: {final_train_acc:.2f}%")
+    print(f"Accuracy: {final_train_acc * 100:.2f}%")
     print(f"AUROC: {final_train_area:.5f}")
     print("------------------------------------")
     print(f"Testing Dataset")
-    print(f"Accuracy: {final_test_acc:.2f}%")
+    print(f"Accuracy: {final_test_acc * 100:.2f}%")
     print(f"AUROC: {final_test_area:.5f}")
+    print("------------------------------------\n")
 
     # compile metric
     metrics = {"train_acc": final_train_acc,

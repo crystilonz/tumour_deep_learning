@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
-from torchmetrics.classification import MulticlassAccuracy, MulticlassAUROC, MulticlassROC, MulticlassConfusionMatrix
+from torchmetrics.classification import MulticlassAccuracy, MulticlassAUROC, MulticlassROC, MulticlassConfusionMatrix, \
+    MulticlassPrecision, MulticlassRecall
 from typing import Optional, Literal
 
 
@@ -73,6 +74,41 @@ def confusion_matrix(model: torch.nn.Module,
         conf_matrix = conf_fn(output, truth)
 
     return conf_matrix
+
+def precision(model: torch.nn.Module,
+              data: torch.Tensor,
+              truth: torch.Tensor,
+              classes: int = None) -> float:
+
+    if classes is None:
+        classes = len(torch.unique(truth))
+
+    prec_fn = MulticlassPrecision(num_classes=classes)
+    model.eval()
+    with torch.no_grad():
+        output = model(data)
+        prec = prec_fn(output, truth)
+
+    return prec.item()
+
+def recall(model: torch.nn.Module,
+           data: torch.Tensor,
+           truth: torch.Tensor,
+           classes: int = None) -> float:
+
+    if classes is None:
+        classes = len(torch.unique(truth))
+
+    rec_fn = MulticlassRecall(num_classes=classes)
+    model.eval()
+    with torch.no_grad():
+        output = model(data)
+        rec = rec_fn(output, truth)
+
+    return rec.item()
+
+
+
 
 
 

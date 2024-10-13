@@ -9,4 +9,4 @@ def save_to_json(data: dict[str, Any],
     if not save_path.parent.exists():
         save_path.parent.mkdir(parents=True)
     with open(save_path, 'w') as f:
-        json.dump(data, f)
+        json.dump(data, f, indent=4)

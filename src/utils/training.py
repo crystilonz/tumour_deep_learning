@@ -84,18 +84,22 @@ def train_model(model: nn.Module,
     training_losses = []
     testing_losses = []
 
+    print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+    print(f"Training model: {model.__class__.__name__} for {epochs} epochs.")
+
     for epoch in tqdm(range(epochs)):
         training_loss = training_step(model, train_dataloader, optimizer, loss_fn, device)
         testing_loss = testing_step(model, test_dataloader, loss_fn, device)
         training_losses.append(training_loss)
         testing_losses.append(testing_loss)
 
-        if epoch % 10 == 0 and epoch > 0:
-            # report
-            print(f"Epoch: {epoch} >>> Training Loss: {training_loss} | Testing Loss: {testing_loss}")
+        # if epoch % 10 == 0 and epoch > 0:
+        #     # report
+        #     print(f"Epoch: {epoch} >>> Training Loss: {training_loss} | Testing Loss: {testing_loss}")
 
-    print("------------------------------")
+    # print("------------------------------")
     print(f"After training >>> Training Loss: {training_losses[-1]} | Testing Loss: {testing_losses[-1]}")
+    print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 
     return training_losses, testing_losses
 

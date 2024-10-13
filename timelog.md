@@ -19,5 +19,5 @@ This file is a timelog for time spent on the project
 | 6/10/2024  | 3                       | Fitting basic classification model on the data from ^                                                             |
 | 7/10/2024  | 1                       | Meeting with supervisor                                                                                           |
 | 9/10/2024  | 3                       | Refactoring code, perform evaluation on the classification model                                                  |
-|            |                         |                                                                                                                   |
-|            |                         |                                                                                                                   |
+| 11/10/2024 | 2                       | Improving model, building new models, improving loss function                                                     |
+| 13/10/2024 | 1                       | update console display for training, some model experimentation, implementing more model evaluation metrics       |
