@@ -8,7 +8,7 @@ import numpy as np
 from data_manipulation.pancancer_from_csv import get_pancancer_data_from_csv, PAN_CANCER_DICT, PAN_CANCER_LABELS
 from models.pan_cancer_classifier import PanCancerClassifier
 from utils.datadump import save_to_json
-from utils.multiclass_evaluate import accuracy, auroc, roc, confusion_matrix
+from utils.multiclass_evaluate import accuracy, auroc, roc, confusion_matrix, recall, precision, f_beta
 from utils.plotting import plot_loss, plot_roc, plot_confusion_matrix
 from utils.training import train_model, save_model
 
@@ -116,6 +116,51 @@ def train_pan_cancer(pan_cancer_model: nn.Module,
                                 truth=testing_labels_tensor,
                                 classes=10)
 
+    # recall on testing part
+    rc = recall(model=pan_cancer_model,
+                    data=testing_data_tensor,
+                    truth=testing_labels_tensor,
+                    classes=10)
+
+    # precision on testing part
+    prec = precision(model=pan_cancer_model,
+                     data=testing_data_tensor,
+                     truth=testing_labels_tensor,
+                     classes=10)
+
+    f1 = f_beta(model=pan_cancer_model,
+                data=testing_data_tensor,
+                truth=testing_labels_tensor,
+                classes=10)
+
+    # class specific metrics
+    accuracy_by_class = accuracy(model=pan_cancer_model,
+                                 data=testing_data_tensor,
+                                 truth=testing_labels_tensor,
+                                 classes=10,
+                                 average='none')
+    auroc_by_class = auroc(model=pan_cancer_model,
+                           data=testing_data_tensor,
+                           truth=testing_labels_tensor,
+                           classes=10,
+                           average='none')
+    recall_by_class = recall(model=pan_cancer_model,
+                             data=testing_data_tensor,
+                             truth=testing_labels_tensor,
+                             classes=10,
+                             average='none')
+    precision_by_class = precision(model=pan_cancer_model,
+                                   data=testing_data_tensor,
+                                   truth=testing_labels_tensor,
+                                   classes=10,
+                                   average='none')
+    f1_by_class = f_beta(model=pan_cancer_model,
+                         data=testing_data_tensor,
+                         truth=testing_labels_tensor,
+                         classes=10,
+                         average='none')
+
+
     # report metrics
     print("------------------------------------")
     print(f"Training Dataset")
@@ -124,14 +169,32 @@ def train_pan_cancer(pan_cancer_model: nn.Module,
     print("------------------------------------")
     print(f"Testing Dataset")
     print(f"Accuracy: {final_test_acc * 100:.2f}%")
-    print(f"AUROC: {final_test_area:.5f}")
+    print(f"Average AUROC: {final_test_area:.5f}")
+    print(f"Recall: {rc:.5f}")
+    print(f"Precision: {prec:.5f}")
+    print(f"F1 Score: {f1:.5f}")
     print("------------------------------------\n")
 
     # compile metric
-    metrics = {"train_acc": final_train_acc,
+    metrics = {"Model Name": pan_cancer_model.__class__.__name__,
+               "Epochs": epochs,
+                "train_acc": final_train_acc,
                "train_area": final_train_area,
                "test_acc": final_test_acc,
-               "test_area": final_test_area}
+               "test_area": final_test_area,
+               "recall": rc,
+               "precision": prec}
+
+    # add by class metrics
+    for i in range(10):
+        # for each class, report accurcay, auroc, recall, precision, f1
+        # format is class_name: {accuracy, auroc, recall, precision, f1}
+        # testing values
+        metrics[PAN_CANCER_DICT[i]] = {"accuracy": accuracy_by_class[i].item(),
+                                       "auroc": auroc_by_class[i].item(),
+                                       "recall": recall_by_class[i].item(),
+                                       "precision": precision_by_class[i].item(),
+                                       "f1": f1_by_class[i].item()}
 
     save_to_json(metrics, save_dir / metric_name)
 
@@ -146,7 +209,8 @@ def train_pan_cancer(pan_cancer_model: nn.Module,
              auroc=final_test_area,
              title="Testing ROC",
              label_dict=PAN_CANCER_DICT,
-             save_to=save_dir / test_roc_name)
+             save_to=save_dir / test_roc_name,
+             auroc_by_class=auroc_by_class)
 
     plot_confusion_matrix(conf_mat,
                           save_to=save_dir / conf_mat_name,

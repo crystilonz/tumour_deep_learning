@@ -46,6 +46,7 @@ def plot_loss(training_loss: [float],
 def plot_roc(false_pos,
              true_pos,
              threshold,
+             auroc_by_class: torch.Tensor = None,
              auroc = None,
              title: str = None,
              label_dict: dict[int, str] = None,
@@ -57,11 +58,13 @@ def plot_roc(false_pos,
     plt.figure(figsize=(7, 7))
     for i in range(len(false_pos)):
         label = label_dict[i] if label_dict is not None else f"Label {i}"
+        if auroc_by_class is not None and auroc_by_class.numel() == len(false_pos):
+            label += f" (AUC = {auroc_by_class[i].item():.05f})"
         plt.plot(false_pos[i], true_pos[i], label=label)
     if title:
-        title +=  f" (AUC = {auroc:.05f})" if auroc else ""
+        title +=  f" (average AUC = {auroc:.05f})" if auroc else ""
     else:
-        title = f"ROC (AUC = {auroc:.05f})" if auroc else "ROC"
+        title = f"ROC (average AUC = {auroc:.05f})" if auroc else "ROC"
     plt.title(title)
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
