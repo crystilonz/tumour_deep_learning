@@ -184,7 +184,17 @@ def k_fold_validation_pancancer(
                           "avg_recall": avg_recall,
                           "avg_precision": avg_precision,
                           "avg_auroc": avg_auroc,
-                          "avg_f_one": avg_f_one
+                          "avg_f_one": avg_f_one,
+
+                          # data for each fold
+                          "folds_losses": loss_list,
+                          "folds_acc1": acc1_list,
+                          "folds_acc3": acc3_list,
+                          "folds_acc5": acc5_list,
+                          "folds_recall": recall_list,
+                          "folds_precision": precision_list,
+                          "folds_auroc": auroc_list,
+                          "folds_f_one": f_one_list
                           }
 
     # metrics for the best model
