@@ -4,6 +4,7 @@ if __name__ == '__main__':
     model = SigmoidalPanCancerClassifier(input_size=34,
                                      hidden_size=42,
                                      output_size=10)
+
     train_pan_cancer(model,
                      epochs=30,
                      save_dir="sigmoidal_pancancer",

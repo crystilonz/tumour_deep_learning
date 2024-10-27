@@ -11,7 +11,7 @@ def training_step(model: nn.Module,
                   dataloader: DataLoader,
                   optimizer: torch.optim.Optimizer,
                   loss_fn: torch.nn.Module,
-                  device: torch.device = None) -> (float, float):
+                  device: torch.device = None) -> float:
     # device agnostic
     if device is None:
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

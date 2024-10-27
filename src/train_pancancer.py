@@ -8,7 +8,8 @@ import numpy as np
 from data_manipulation.pancancer_from_csv import get_pancancer_data_from_csv, PAN_CANCER_DICT, PAN_CANCER_LABELS
 from models.pan_cancer_classifier import PanCancerClassifier
 from utils.datadump import save_to_json
-from utils.multiclass_evaluate import accuracy, auroc, roc, confusion_matrix, recall, precision, f_beta
+from utils.multiclass_evaluate import accuracy, auroc, roc, confusion_matrix, recall, precision, f_beta, \
+    evaluate_multiclass_classifier
 from utils.plotting import plot_loss, plot_roc, plot_confusion_matrix
 from utils.training import train_model, save_model
 
@@ -58,9 +59,9 @@ def train_pan_cancer(pan_cancer_model: nn.Module,
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     test_dataloader = DataLoader(test_dataset, batch_size=batch_size)
 
-    # loss weights
-    total_label = len(labels)
-    weights = [total_label/(np.sum(labels == i) * 10) for i in range(10)]
+    # loss weights on training
+    total_label = len(training_labels)
+    weights = [total_label/(np.sum(training_labels == i) * 10) for i in range(10)]
 
     # loss function and optimizer
     loss_fn = torch.nn.CrossEntropyLoss(weight=torch.FloatTensor(weights))
@@ -85,80 +86,45 @@ def train_pan_cancer(pan_cancer_model: nn.Module,
               show_plot=True)
 
     # evaluate model
-    final_train_acc = accuracy(model=pan_cancer_model,
-                               data=training_data_tensor,
-                               truth=training_labels_tensor,
-                               classes=10)
-    final_test_acc = accuracy(model=pan_cancer_model,
-                              data=testing_data_tensor,
-                              truth=testing_labels_tensor,
-                              classes=10)
-    final_train_area = auroc(model=pan_cancer_model,
-                             data=training_data_tensor,
-                             truth=training_labels_tensor,
-                             classes=10)
-    final_test_area = auroc(model=pan_cancer_model,
-                            data=testing_data_tensor,
-                            truth=testing_labels_tensor,
-                            classes=10)
-    train_fpr, train_tpr, train_threshold = roc(model=pan_cancer_model,
-                                                data=training_data_tensor,
-                                                truth=training_labels_tensor,
-                                                classes=10)
-    test_fpr, test_tpr, test_threshold = roc(model=pan_cancer_model,
-                                             data=testing_data_tensor,
-                                             truth=testing_labels_tensor,
-                                             classes=10)
+    training_evaluate_metrics = evaluate_multiclass_classifier(model=pan_cancer_model,
+                                                               data=training_data_tensor,
+                                                               truth=training_labels_tensor,
+                                                               classes=10)
+    testing_evaluate_metrics = evaluate_multiclass_classifier(model=pan_cancer_model,
+                                                              data=testing_data_tensor,
+                                                              truth=testing_labels_tensor,
+                                                              classes=10)
+
+    final_train_acc = training_evaluate_metrics["top1_acc"]
+    final_test_acc = testing_evaluate_metrics["top1_acc"]
+    top3_acc = testing_evaluate_metrics["top3_acc"]
+    top_5_acc = testing_evaluate_metrics["top_5_acc"]
+
+    final_train_area = training_evaluate_metrics["auroc"]
+    final_test_area = testing_evaluate_metrics["auroc"]
+
+    train_fpr, train_tpr, train_threshold = training_evaluate_metrics["roc"]
+    test_fpr, test_tpr, test_threshold = testing_evaluate_metrics["roc"]
 
     # confusion
-    conf_mat = confusion_matrix(model=pan_cancer_model,
-                                data=testing_data_tensor,
-                                truth=testing_labels_tensor,
-                                classes=10)
+    conf_mat = testing_evaluate_metrics["confusion_matrix"]
 
     # recall on testing part
-    rc = recall(model=pan_cancer_model,
-                    data=testing_data_tensor,
-                    truth=testing_labels_tensor,
-                    classes=10)
+    rc = testing_evaluate_metrics["recall"]
 
     # precision on testing part
-    prec = precision(model=pan_cancer_model,
-                     data=testing_data_tensor,
-                     truth=testing_labels_tensor,
-                     classes=10)
+    prec = testing_evaluate_metrics["precision"]
 
-    f1 = f_beta(model=pan_cancer_model,
-                data=testing_data_tensor,
-                truth=testing_labels_tensor,
-                classes=10)
+    f1 = testing_evaluate_metrics["f_one"]
 
     # class specific metrics
-    accuracy_by_class = accuracy(model=pan_cancer_model,
-                                 data=testing_data_tensor,
-                                 truth=testing_labels_tensor,
-                                 classes=10,
-                                 average='none')
-    auroc_by_class = auroc(model=pan_cancer_model,
-                           data=testing_data_tensor,
-                           truth=testing_labels_tensor,
-                           classes=10,
-                           average='none')
-    recall_by_class = recall(model=pan_cancer_model,
-                             data=testing_data_tensor,
-                             truth=testing_labels_tensor,
-                             classes=10,
-                             average='none')
-    precision_by_class = precision(model=pan_cancer_model,
-                                   data=testing_data_tensor,
-                                   truth=testing_labels_tensor,
-                                   classes=10,
-                                   average='none')
-    f1_by_class = f_beta(model=pan_cancer_model,
-                         data=testing_data_tensor,
-                         truth=testing_labels_tensor,
-                         classes=10,
-                         average='none')
+    top1_acc_by_class = testing_evaluate_metrics["class_top1_acc"]
+    top3_acc_by_class = testing_evaluate_metrics["class_top3_acc"]
+    top_5_acc_by_class = testing_evaluate_metrics["class_top_5_acc"]
+    auroc_by_class = testing_evaluate_metrics["class_auroc"]
+    recall_by_class = testing_evaluate_metrics["class_recall"]
+    precision_by_class = testing_evaluate_metrics["class_precision"]
+    f1_by_class = testing_evaluate_metrics["class_f_one"]
 
 
     # report metrics
@@ -178,23 +144,25 @@ def train_pan_cancer(pan_cancer_model: nn.Module,
     # compile metric
     metrics = {"Model Name": pan_cancer_model.__class__.__name__,
                "Epochs": epochs,
-                "train_acc": final_train_acc,
-               "train_area": final_train_area,
-               "test_acc": final_test_acc,
-               "test_area": final_test_area,
+               "auroc": final_test_area,
+               "top1_acc": final_test_acc,
+               "top3_acc": top3_acc,
+               "top_5_acc": top_5_acc,
                "recall": rc,
-               "precision": prec}
+               "precision": prec,
+               "f_one": f1}
 
     # add by class metrics
     for i in range(10):
-        # for each class, report accurcay, auroc, recall, precision, f1
-        # format is class_name: {accuracy, auroc, recall, precision, f1}
+        # for each class, report top1 top3 top5 accuracy, auroc, recall, precision, f1
         # testing values
-        metrics[PAN_CANCER_DICT[i]] = {"accuracy": accuracy_by_class[i].item(),
+        metrics[PAN_CANCER_DICT[i]] = {"top1_acc": top1_acc_by_class[i].item(),
+                                       "top3_acc": top3_acc_by_class[i].item(),
+                                       "top_5_acc": top_5_acc_by_class[i].item(),
                                        "auroc": auroc_by_class[i].item(),
                                        "recall": recall_by_class[i].item(),
                                        "precision": precision_by_class[i].item(),
-                                       "f1": f1_by_class[i].item()}
+                                       "f_one": f1_by_class[i].item()}
 
     save_to_json(metrics, save_dir / metric_name)
 
