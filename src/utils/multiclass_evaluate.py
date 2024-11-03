@@ -188,6 +188,11 @@ def evaluate_multiclass_classifier(
     class_top3_acc_fn = MulticlassAccuracy(num_classes=classes, average="none", top_k=3)
     class_top5_acc_fn = MulticlassAccuracy(num_classes=classes, average="none", top_k=5)
 
+    # micro
+    micro_top1_acc_fn = MulticlassAccuracy(num_classes=classes, average="micro", top_k=1)
+    micro_top3_acc_fn = MulticlassAccuracy(num_classes=classes, average="micro", top_k=3)
+    micro_top5_acc_fn = MulticlassAccuracy(num_classes=classes, average="micro", top_k=5)
+
     # auroc
     auroc_fn = MulticlassAUROC(num_classes=classes, average="macro")
     class_auroc_fn = MulticlassAUROC(num_classes=classes, average="none")
@@ -201,14 +206,17 @@ def evaluate_multiclass_classifier(
     # precision
     prec_fn = MulticlassPrecision(num_classes=classes, average="macro")
     class_prec_fn = MulticlassPrecision(num_classes=classes, average="none")
+    micro_prec_fn = MulticlassPrecision(num_classes=classes, average="micro")
 
     # recall
     rec_fn = MulticlassRecall(num_classes=classes, average="macro")
     class_rec_fn = MulticlassRecall(num_classes=classes, average="none")
+    micro_rec_fn = MulticlassRecall(num_classes=classes, average="micro")
 
     # f_one
     f_one = MulticlassFBetaScore(num_classes=classes, beta=1.0, average="macro")
     class_f_one_fn = MulticlassFBetaScore(num_classes=classes, beta=1.0, average="none")
+    micro_f_one_fn = MulticlassFBetaScore(num_classes=classes, beta=1.0, average="micro")
 
     # run through data
     model.eval()
@@ -235,6 +243,14 @@ def evaluate_multiclass_classifier(
         class_rec = class_rec_fn(output, truth)
         class_f_one = class_f_one_fn(output, truth)
 
+        # micros
+        micro_top1_acc = micro_top1_acc_fn(output, truth).item()
+        micro_top3_acc = micro_top3_acc_fn(output, truth).item()
+        micro_top5_acc = micro_top5_acc_fn(output, truth).item()
+        micro_f_one = micro_f_one_fn(output, truth).item()
+        micro_prec = micro_prec_fn(output, truth).item()
+        micro_rec = micro_rec_fn(output, truth).item()
+
 
         # if averaged, then return as a number
         top1_acc = top1_acc.item()
@@ -244,6 +260,7 @@ def evaluate_multiclass_classifier(
         prec = prec.item()
         rec = rec.item()
         f_one = f_one.item()
+
 
     # assemble to dict
     return {
@@ -265,7 +282,15 @@ def evaluate_multiclass_classifier(
         "class_auroc": class_auroc,
         "class_precision": class_prec,
         "class_recall": class_rec,
-        "class_f_one": class_f_one
+        "class_f_one": class_f_one,
+
+        # micros
+        "micro_top1_acc": micro_top1_acc,
+        "micro_top3_acc": micro_top3_acc,
+        "micro_top5_acc": micro_top5_acc,
+        "micro_f_one": micro_f_one,
+        "micro_precision": micro_prec,
+        "micro_recall": micro_rec
     }
 
 

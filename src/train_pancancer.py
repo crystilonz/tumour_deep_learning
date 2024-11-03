@@ -98,7 +98,7 @@ def train_pan_cancer(pan_cancer_model: nn.Module,
     final_train_acc = training_evaluate_metrics["top1_acc"]
     final_test_acc = testing_evaluate_metrics["top1_acc"]
     top3_acc = testing_evaluate_metrics["top3_acc"]
-    top_5_acc = testing_evaluate_metrics["top_5_acc"]
+    top_5_acc = testing_evaluate_metrics["top5_acc"]
 
     final_train_area = training_evaluate_metrics["auroc"]
     final_test_area = testing_evaluate_metrics["auroc"]
@@ -114,13 +114,13 @@ def train_pan_cancer(pan_cancer_model: nn.Module,
 
     # precision on testing part
     prec = testing_evaluate_metrics["precision"]
-
     f1 = testing_evaluate_metrics["f_one"]
+
 
     # class specific metrics
     top1_acc_by_class = testing_evaluate_metrics["class_top1_acc"]
     top3_acc_by_class = testing_evaluate_metrics["class_top3_acc"]
-    top_5_acc_by_class = testing_evaluate_metrics["class_top_5_acc"]
+    top_5_acc_by_class = testing_evaluate_metrics["class_top5_acc"]
     auroc_by_class = testing_evaluate_metrics["class_auroc"]
     recall_by_class = testing_evaluate_metrics["class_recall"]
     precision_by_class = testing_evaluate_metrics["class_precision"]
@@ -150,7 +150,13 @@ def train_pan_cancer(pan_cancer_model: nn.Module,
                "top_5_acc": top_5_acc,
                "recall": rc,
                "precision": prec,
-               "f_one": f1}
+               "f_one": f1,
+               "micro_top1_acc": testing_evaluate_metrics["micro_top1_acc"],
+               "micro_top3_acc": testing_evaluate_metrics["micro_top3_acc"],
+               "micro_top5_acc": testing_evaluate_metrics["micro_top5_acc"],
+               "micro_recall": testing_evaluate_metrics["micro_recall"],
+               "micro_precision": testing_evaluate_metrics["micro_precision"],
+               "micro_f_one": testing_evaluate_metrics["micro_f_one"],}
 
     # add by class metrics
     for i in range(10):

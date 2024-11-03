@@ -2,7 +2,18 @@ import json
 import numpy as np
 import seaborn as sn
 import pandas as pd
+import matplotlib.pyplot as plt
 from pathlib import Path
+from utils.plotting import ENV_SHOW_PLOT
+
+def flatten(list_of_lists):
+    out = []
+    for i in range(len(list_of_lists)):
+        for j in range(len(list_of_lists[i])):
+            out.append(list_of_lists[i][j])
+
+    return out
+
 
 def plot_validation(parent_dir: Path,
                     metrics_file_name: Path | str,
@@ -10,8 +21,24 @@ def plot_validation(parent_dir: Path,
 
     model_names: list[str] = []  # list of model names
     losses: list[list[float]] = []  # list of list of loss from each fold
-    top1_accs: list[list[float]] = []  # list of list of accs
-    aurocs: list[list[float]] = []  #
+    top1_accs: list[list[float]] = []  # list of list of top 1 accuracy from each fold
+    aurocs: list[list[float]] = []  # list of list of aurocs
+
+    avg_losses: list[float] = []
+    avg_acc1: list[float] = []
+    avg_acc3: list[float] = []
+    avg_acc5: list[float] = []
+    avg_recall: list[float] = []
+    avg_precision: list[float] = []
+    avg_auroc: list[float] = []
+    avg_f_one: list[float] = []
+
+    micro_acc1: list[float] = []
+    micro_acc3: list[float] = []
+    micro_acc5: list[float] = []
+    micro_recall: list[float] = []
+    micro_precision: list[float] = []
+    micro_f_one: list[float] = []
 
 
     # scour the directory for metrics file name
@@ -25,7 +52,167 @@ def plot_validation(parent_dir: Path,
             metrics_data = metrics_file.read()
             metrics_dict = json.loads(metrics_data)
 
+        model_names.append(metrics_dict['Model Name'])
+        losses.append(metrics_dict['folds_losses'])
+        top1_accs.append(metrics_dict['folds_micro_acc1'])
+        aurocs.append(metrics_dict['folds_auroc'])
+
+        avg_losses.append(metrics_dict['avg_loss'])
+        avg_acc1.append(metrics_dict['avg_acc1'])
+        avg_acc3.append(metrics_dict['avg_acc3'])
+        avg_acc5.append(metrics_dict['avg_acc5'])
+        avg_recall.append(metrics_dict['avg_recall'])
+        avg_precision.append(metrics_dict['avg_precision'])
+        avg_auroc.append(metrics_dict['avg_auroc'])
+        avg_f_one.append(metrics_dict['avg_f_one'])
+
+        micro_acc1.append(metrics_dict['avg_micro_acc1'])
+        micro_acc3.append(metrics_dict['avg_micro_acc3'])
+        micro_acc5.append(metrics_dict['avg_micro_acc5'])
+        micro_recall.append(metrics_dict['avg_micro_recall'])
+        micro_precision.append(metrics_dict['avg_micro_precision'])
+        micro_f_one.append(metrics_dict['avg_micro_f_one'])
+
+    # build pandas dataframe
+    metrics_df = pd.DataFrame({'Model Name': model_names,
+                               'Loss': avg_losses,
+                               'Top-1 Acc': avg_acc1,
+                               'Top-3 Acc': avg_acc3,
+                               'Top-5 Acc': avg_acc5,
+                               'Recall': avg_recall,
+                               'Precision': avg_precision,
+                               'AUROC': avg_auroc,
+                               'F1 Score': avg_f_one,
+
+                               'Micro Acc1': micro_acc1,
+                               'Micro Acc3': micro_acc3,
+                               'Micro Acc5': micro_acc5,
+                               'Micro Recall': micro_recall,
+                               'Micro Precision': micro_precision,
+                               'Micro F1 Score': micro_f_one})
+
+    # find data shapes
+    models_num = len(model_names)
+    folds_num = len(losses[0])  # assume everything has the same fold
+
+    # model name column
+    model_names_col = []
+    for i in range(models_num):
+        model_names_col += ([model_names[i]] * len(losses[i]))
+
+    # Facet plot
+    sn.set_color_codes("deep")
+    sn.set_theme(style="whitegrid")
+    font = {'size': 16}
+    plt.rc('font', **font)
+    fig = plt.figure(figsize=(30, 20))
+    fig.suptitle('K-Fold Validation', fontsize=50)
+
+    # loss plot
+    ax1 = fig.add_subplot(231)
+    ax1.set_title("Loss", fontsize=40)
+    ax1.set_xticklabels(model_names, rotation=45, ha='right', fontsize=14)
+    # build dictionary
+    losses_dict = {'Model Name': model_names_col,
+                   'Loss': flatten(losses)}
+    losses_df = pd.DataFrame(losses_dict)
+    sn.violinplot(losses_df, x="Model Name", y="Loss", color="r", ax=ax1, inner=None, fill=False, width=1, linewidth=5)
+    sn.swarmplot(data=losses_df, x="Model Name", y="Loss", color="r", size=10, ax=ax1)
+    ax1.set(xlabel=None)
+    ax1.tick_params(axis='y', which='major', labelsize=14)
+    ax1.tick_params(axis='x', bottom=True)
+    ax1.set_ylabel(ax1.get_ylabel(), fontsize=24)
+    ax1.grid(visible=True, which='major', axis='x', linestyle='--')
 
 
-    pass
-    #TODO
+    # accuracy plot
+    ax2 = fig.add_subplot(232)
+    ax2.set_title("Top-1 Accuracy", fontsize=40)
+    ax2.set_xticklabels(model_names, rotation=45, ha="right", fontsize=16)
+    # build dictionary
+    acc_dict = {
+        'Model Name': model_names_col,
+        'Accuracy (%)': [flatten(top1_accs)[i] * 100 for i in range(len(flatten(top1_accs)))],
+    }
+    acc_df = pd.DataFrame(acc_dict)
+    sn.violinplot(acc_df, x="Model Name", y="Accuracy (%)", color="g", ax=ax2, inner=None, fill=False, width=1, linewidth=5)
+    sn.swarmplot(acc_df, x="Model Name", y="Accuracy (%)", color="g", size=10, ax=ax2)
+    ax2.set(xlabel=None)
+    ax2.tick_params(axis='y', which='major', labelsize=14)
+    ax2.tick_params(axis='x', bottom=True)
+    ax2.set_ylabel(ax2.get_ylabel(), fontsize=24)
+    ax2.grid(visible=True, which='major', axis='x', linestyle='--')
+
+    # auroc plot
+    ax3 = fig.add_subplot(233)
+    ax3.set_title("Area Under ROC", fontsize=40)
+    ax3.set_xticklabels(model_names, rotation=45, ha='right', fontsize=16)
+    # build dict
+    auroc_dict = {
+        'Model Name': model_names_col,
+        'AUROC' : flatten(aurocs)
+    }
+    auroc_df = pd.DataFrame(auroc_dict)
+    sn.violinplot(auroc_df, x="Model Name", y="AUROC", color="b", ax=ax3, inner=None, fill=False, width=1, linewidth=5)
+    sn.swarmplot(auroc_df, x="Model Name", y="AUROC", color="b", size=10, ax=ax3)
+    ax3.set(xlabel=None)
+    ax3.tick_params(axis='y', which='major', labelsize=14)
+    ax3.tick_params(axis='x', bottom=True)
+    ax3.set_ylabel(ax3.get_ylabel(), fontsize=24)
+    ax3.grid(visible=True, which='major', axis='x', linestyle='--')
+
+    # table
+    ax4 = fig.add_subplot(212)
+    box = ax4.get_position()
+    box.y0 = box.y0 - 0.15
+    box.y1 = box.y1 - 0.15
+    ax4.set_position(box)
+    ax4.set_title("Model Validation Metrics", fontsize=40)
+    ax4.set_axis_off()
+
+    table_df = pd.DataFrame()
+    table_df['Model Name'] = model_names
+    table_df['Loss'] = metrics_df['Loss'].map('{:.5f}'.format)
+    table_df['Top-1 Acc'] = metrics_df['Micro Acc1'].map('{:.3f}'.format) + metrics_df['Top-1 Acc'].map('({:.3f})'.format)
+    table_df['Top-3 Acc'] = metrics_df['Micro Acc3'].map('{:.3f}'.format) + metrics_df['Top-3 Acc'].map('({:.3f})'.format)
+    table_df['Top-5 Acc'] = metrics_df['Micro Acc5'].map('{:.3f}'.format) + metrics_df['Top-5 Acc'].map('({:.3f})'.format)
+    table_df['Recall'] =  metrics_df['Micro Recall'].map('{:.3f}'.format) + metrics_df['Recall'].map('({:.3f})'.format)
+    table_df['Precision'] = metrics_df['Micro Precision'].map('{:.3f}'.format) + metrics_df['Precision'].map('({:.3f})'.format)
+    table_df['AUROC'] = metrics_df['AUROC'].map('{:.3f}'.format)
+    table_df['F1 Score'] = metrics_df['Micro F1 Score'].map('{:.3f}'.format) + metrics_df['F1 Score'].map('({:.3f})'.format)
+
+    # metrics_df.loc[:, 'Loss'] = metrics_df['Loss'].map('{:.5f}'.format)
+    # metrics_df.loc[:, 'Top-1 Acc'] = metrics_df['Top-1 Acc'].map('{:.3f}'.format)
+    # metrics_df.loc[:, 'Top-3 Acc'] = metrics_df['Top-3 Acc'].map('{:.3f}'.format)
+    # metrics_df.loc[:, 'Top-5 Acc'] = metrics_df['Top-5 Acc'].map('{:.3f}'.format)
+    # metrics_df.loc[:, 'Recall'] =  metrics_df['Recall'].map('{:.3f}'.format)
+    # metrics_df.loc[:, 'Precision'] = metrics_df['Precision'].map('{:.3f}'.format)
+    # metrics_df.loc[:, 'AUROC'] = metrics_df['AUROC'].map('{:.3f}'.format)
+    # metrics_df.loc[:, 'F1 Score'] = metrics_df['F1 Score'].map('{:.3f}'.format)
+
+    table = pd.plotting.table(ax4, table_df, loc='center', cellLoc='center')
+    table.auto_set_font_size(False)
+    table.set_fontsize(26)
+    table.scale(1.5, 4)
+    table.auto_set_column_width(col=list(range(len(table_df.columns))))
+
+    # save plot
+    plt.savefig(plot_save_dir)
+
+    if ENV_SHOW_PLOT:
+        plt.show()
+
+
+
+if __name__ == "__main__":
+    plot_validation(Path(__file__).parent.parent / "validation_models",
+                    "k_fold_validation.json",
+                    Path(__file__).parent.parent / "validation_models" / "validation_figs",)
+
+
+
+
+
+
+
+

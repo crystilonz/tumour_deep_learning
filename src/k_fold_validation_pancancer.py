@@ -89,6 +89,13 @@ def k_fold_validation_pancancer(
     auroc_list = []
     f_one_list = []
 
+    micro_acc1_list = []
+    micro_acc3_list = []
+    micro_acc5_list = []
+    micro_recall_list = []
+    micro_precision_list = []
+    micro_f_one_list = []
+
     if mode == "normal":
         kf = KFold(n_splits=k, shuffle=True)
     elif mode == "stratified":
@@ -156,10 +163,18 @@ def k_fold_validation_pancancer(
         auroc_list.append(metrics['auroc'])
         f_one_list.append(metrics['f_one'])
 
+        # micro
+        micro_acc1_list.append(metrics['micro_top1_acc'])
+        micro_acc3_list.append(metrics['micro_top3_acc'])
+        micro_acc5_list.append(metrics['micro_top5_acc'])
+        micro_recall_list.append(metrics['micro_recall'])
+        micro_precision_list.append(metrics['micro_precision'])
+        micro_f_one_list.append(metrics['micro_f_one'])
+
         # report
         print(f"Final Loss: {final_testing_loss:.5f}")
-        print(f"Top1 Accuracy: {metrics['top1_acc'] * 100:.02f} %")
-        print(f"Top3 Accuracy: {metrics['top3_acc'] * 100:.02f} %")
+        print(f"Top1 Accuracy: {metrics['micro_top1_acc'] * 100:.02f}({metrics['top1_acc'] * 100:.02f}) %")
+        print(f"Top3 Accuracy: {metrics['micro_top3_acc'] * 100:.02f}({metrics['top3_acc'] * 100:.02f}) %")
         print(f"AUROC: {metrics['auroc']:.5f}")
         print("-" * 80)
 
@@ -172,6 +187,14 @@ def k_fold_validation_pancancer(
     avg_precision = np.mean(precision_list)
     avg_auroc = np.mean(auroc_list)
     avg_f_one = np.mean(f_one_list)
+
+    # micro
+    avg_micro_acc1 = np.mean(micro_acc1_list)
+    avg_micro_acc3 = np.mean(micro_acc3_list)
+    avg_micro_acc5 = np.mean(micro_acc5_list)
+    avg_micro_recall = np.mean(micro_recall_list)
+    avg_micro_precision = np.mean(micro_precision_list)
+    avg_micro_f_one = np.mean(micro_f_one_list)
 
     # compile metrics
     validation_metrics = {"Model Name": best_model.__class__.__name__,
@@ -186,6 +209,14 @@ def k_fold_validation_pancancer(
                           "avg_auroc": avg_auroc,
                           "avg_f_one": avg_f_one,
 
+                          # micro data
+                          "avg_micro_acc1": avg_micro_acc1,
+                          "avg_micro_acc3": avg_micro_acc3,
+                          "avg_micro_acc5": avg_micro_acc5,
+                          "avg_micro_recall": avg_micro_recall,
+                          "avg_micro_precision": avg_micro_precision,
+                          "avg_micro_f_one": avg_micro_f_one,
+
                           # data for each fold
                           "folds_losses": loss_list,
                           "folds_acc1": acc1_list,
@@ -194,7 +225,15 @@ def k_fold_validation_pancancer(
                           "folds_recall": recall_list,
                           "folds_precision": precision_list,
                           "folds_auroc": auroc_list,
-                          "folds_f_one": f_one_list
+                          "folds_f_one": f_one_list,
+
+                          # micro
+                          "folds_micro_acc1": micro_acc1_list,
+                          "folds_micro_acc3": micro_acc3_list,
+                          "folds_micro_acc5": micro_acc5_list,
+                          "folds_micro_recall": micro_recall_list,
+                          "folds_micro_precision": micro_precision_list,
+                          "folds_micro_f_one": micro_f_one_list
                           }
 
     # metrics for the best model
@@ -208,7 +247,14 @@ def k_fold_validation_pancancer(
                           "top_5_acc": best_metrics['top5_acc'],
                           "recall": best_metrics['recall'],
                           "precision": best_metrics['precision'],
-                          "f_one": best_metrics['f_one']
+                          "f_one": best_metrics['f_one'],
+
+                          "micro_top1_acc": best_metrics['micro_top1_acc'],
+                          "micro_top3_acc": best_metrics['micro_top3_acc'],
+                          "micro_top5_acc": best_metrics['micro_top5_acc'],
+                          "micro_recall": best_metrics['micro_recall'],
+                          "micro_precision": best_metrics['micro_precision'],
+                          "micro_f_one": best_metrics['micro_f_one']
                           }
 
     # class specific metrics
@@ -256,13 +302,13 @@ def k_fold_validation_pancancer(
     print("-" * 80)
     print(f"Performed {k}-fold cross validation on {best_model.__class__.__name__}, with {epochs} epochs:")
     print(f"\tAverage Loss: {avg_loss:.5f}")
-    print(f"\tAverage Acc1: {avg_acc1 * 100:.02f} %")
-    print(f"\tAverage Acc3: {avg_acc3 * 100:.02f} %")
-    print(f"\tAverage Acc5: {avg_acc5 * 100:.02f} %")
-    print(f"\tAverage Recall: {avg_recall:.5f}")
-    print(f"\tAverage Precision: {avg_precision:.5f}")
+    print(f"\tAverage Acc1: {avg_micro_acc1 * 100:.02f}({avg_acc1 * 100:.02f}) %")
+    print(f"\tAverage Acc3: {avg_micro_acc3 * 100:.02f}({avg_acc3 * 100:.02f}) %")
+    print(f"\tAverage Acc5: {avg_micro_acc5 * 100:.02f}({avg_acc5 * 100:.02f}) %")
+    print(f"\tAverage Recall: {avg_micro_recall:.5f}({avg_recall:.5f})")
+    print(f"\tAverage Precision: {avg_micro_precision:.5f}({avg_precision:.5f})")
     print(f"\tAverage AUROC: {avg_auroc:.5f}")
-    print(f"\tAverage F1: {avg_f_one:.5f}")
+    print(f"\tAverage F1: {avg_micro_f_one:.5f}({avg_f_one:.5f})")
     print("-" * 80)
     print("=" * 100 + "\n")
 
