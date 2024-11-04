@@ -287,10 +287,7 @@ def evaluate_multiclass_classifier(
         # micros
         "micro_top1_acc": micro_top1_acc,
         "micro_top3_acc": micro_top3_acc,
-        "micro_top5_acc": micro_top5_acc,
-        "micro_f_one": micro_f_one,
-        "micro_precision": micro_prec,
-        "micro_recall": micro_rec
+        "micro_top5_acc": micro_top5_acc
     }
 
 

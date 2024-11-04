@@ -69,9 +69,6 @@ def plot_validation(parent_dir: Path,
         micro_acc1.append(metrics_dict['avg_micro_acc1'])
         micro_acc3.append(metrics_dict['avg_micro_acc3'])
         micro_acc5.append(metrics_dict['avg_micro_acc5'])
-        micro_recall.append(metrics_dict['avg_micro_recall'])
-        micro_precision.append(metrics_dict['avg_micro_precision'])
-        micro_f_one.append(metrics_dict['avg_micro_f_one'])
 
     # build pandas dataframe
     metrics_df = pd.DataFrame({'Model Name': model_names,
@@ -86,10 +83,7 @@ def plot_validation(parent_dir: Path,
 
                                'Micro Acc1': micro_acc1,
                                'Micro Acc3': micro_acc3,
-                               'Micro Acc5': micro_acc5,
-                               'Micro Recall': micro_recall,
-                               'Micro Precision': micro_precision,
-                               'Micro F1 Score': micro_f_one})
+                               'Micro Acc5': micro_acc5})
 
     # find data shapes
     models_num = len(model_names)
@@ -176,10 +170,10 @@ def plot_validation(parent_dir: Path,
     table_df['Top-1 Acc'] = metrics_df['Micro Acc1'].map('{:.3f}'.format) + metrics_df['Top-1 Acc'].map('({:.3f})'.format)
     table_df['Top-3 Acc'] = metrics_df['Micro Acc3'].map('{:.3f}'.format) + metrics_df['Top-3 Acc'].map('({:.3f})'.format)
     table_df['Top-5 Acc'] = metrics_df['Micro Acc5'].map('{:.3f}'.format) + metrics_df['Top-5 Acc'].map('({:.3f})'.format)
-    table_df['Recall'] =  metrics_df['Micro Recall'].map('{:.3f}'.format) + metrics_df['Recall'].map('({:.3f})'.format)
-    table_df['Precision'] = metrics_df['Micro Precision'].map('{:.3f}'.format) + metrics_df['Precision'].map('({:.3f})'.format)
+    table_df['Recall'] =  metrics_df['Recall'].map('{:.3f}'.format)
+    table_df['Precision'] = metrics_df['Precision'].map('{:.3f}'.format)
     table_df['AUROC'] = metrics_df['AUROC'].map('{:.3f}'.format)
-    table_df['F1 Score'] = metrics_df['Micro F1 Score'].map('{:.3f}'.format) + metrics_df['F1 Score'].map('({:.3f})'.format)
+    table_df['F1 Score'] = metrics_df['F1 Score'].map('{:.3f}'.format)
 
     # metrics_df.loc[:, 'Loss'] = metrics_df['Loss'].map('{:.5f}'.format)
     # metrics_df.loc[:, 'Top-1 Acc'] = metrics_df['Top-1 Acc'].map('{:.3f}'.format)

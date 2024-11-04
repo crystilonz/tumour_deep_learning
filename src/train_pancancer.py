@@ -130,11 +130,11 @@ def train_pan_cancer(pan_cancer_model: nn.Module,
     # report metrics
     print("------------------------------------")
     print(f"Training Dataset")
-    print(f"Accuracy: {final_train_acc * 100:.2f}%")
+    print(f"Accuracy: {training_evaluate_metrics["micro_top1_acc"] * 100 :.2f}({final_train_acc * 100:.2f})%")
     print(f"AUROC: {final_train_area:.5f}")
     print("------------------------------------")
     print(f"Testing Dataset")
-    print(f"Accuracy: {final_test_acc * 100:.2f}%")
+    print(f"Accuracy: {testing_evaluate_metrics["micro_top1_acc"] * 100 :.2f}({final_test_acc * 100:.2f})%")
     print(f"Average AUROC: {final_test_area:.5f}")
     print(f"Recall: {rc:.5f}")
     print(f"Precision: {prec:.5f}")
@@ -153,10 +153,7 @@ def train_pan_cancer(pan_cancer_model: nn.Module,
                "f_one": f1,
                "micro_top1_acc": testing_evaluate_metrics["micro_top1_acc"],
                "micro_top3_acc": testing_evaluate_metrics["micro_top3_acc"],
-               "micro_top5_acc": testing_evaluate_metrics["micro_top5_acc"],
-               "micro_recall": testing_evaluate_metrics["micro_recall"],
-               "micro_precision": testing_evaluate_metrics["micro_precision"],
-               "micro_f_one": testing_evaluate_metrics["micro_f_one"],}
+               "micro_top5_acc": testing_evaluate_metrics["micro_top5_acc"]}
 
     # add by class metrics
     for i in range(10):
