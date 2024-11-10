@@ -1,4 +1,5 @@
 from sklearn.model_selection import train_test_split, KFold, StratifiedKFold
+from sklearn.utils import resample
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset, SubsetRandomSampler
@@ -10,7 +11,7 @@ from models.pan_cancer_classifier import PanCancerClassifier
 from utils.datadump import save_to_json
 from utils.multiclass_evaluate import accuracy, auroc, roc, confusion_matrix, recall, precision, f_beta, \
     evaluate_multiclass_classifier
-from utils.plotting import plot_loss, plot_roc, plot_confusion_matrix
+from utils.plotting import plot_loss, plot_roc, plot_confusion_matrix, plot_shap_all
 from utils.training import train_model, save_model
 from typing import Literal
 
@@ -23,10 +24,12 @@ DEFAULT_BEST_MODEL_METRICS_NAME = "best_metrics.json"
 DEFAULT_PLOT_NAME = "best_loss_plot"
 DEFAULT_ROC_NAME = "best_roc"
 DEFAULT_CONFUSION_MATRIX_NAME = "best_confusion_matrix"
+DEFAULT_SHAP_DIR = "shap_figures"
 DEFAULT_EPOCH = 30
 DEFAULT_HIDDEN_SIZE = 42
 DEFAULT_BATCH_SIZE = 64
 DEFAULT_FOLD = 5
+DEFAULT_SHAP_SAMPLE_SIZE = 1000
 
 
 def k_fold_validation_pancancer(
@@ -36,6 +39,7 @@ def k_fold_validation_pancancer(
         epochs: int = DEFAULT_EPOCH,
         k: int = DEFAULT_FOLD,
         batch_size: int = DEFAULT_BATCH_SIZE,
+        shap_samples: int = DEFAULT_SHAP_SAMPLE_SIZE,
         results_parent: str | Path = DEFAULT_VALIDATION_RESULTS_PARENT,
         results_dir: str | Path = DEFAULT_VALIDATION_MODEL_NAME,
         best_model_save_name: str | Path = DEFAULT_BEST_MODEL_NAME,
@@ -43,7 +47,8 @@ def k_fold_validation_pancancer(
         validation_results_save_name: str | Path = DEFAULT_VALIDATION_RESULTS_NAME,
         best_loss_plot_save_name: str | Path = DEFAULT_PLOT_NAME,
         best_roc_plot_save_name: str | Path = DEFAULT_ROC_NAME,
-        best_conf_mat_save_name: str | Path = DEFAULT_CONFUSION_MATRIX_NAME
+        best_conf_mat_save_name: str | Path = DEFAULT_CONFUSION_MATRIX_NAME,
+        shap_dir: str | Path = DEFAULT_SHAP_DIR
 ) -> torch.nn.Module:
     """
     :param model_creating_lambda: lambda function for creating model. calling x must return a new instance of the model
@@ -52,6 +57,7 @@ def k_fold_validation_pancancer(
     :param epochs:  Number of epochs
     :param k: K in k-fold validation. Default is 20
     :param batch_size: Batch size for training
+    :param shap_samples: Number of shap samples
     :param results_parent: parent directory of the validation results (of all models)
     :param results_dir: directory which will contain the validation output
     :param best_model_save_name: name of the checkpoint file which will contain the checkpoint of the best performing model (smallest testing loss)
@@ -60,6 +66,7 @@ def k_fold_validation_pancancer(
     :param best_loss_plot_save_name: file name for the loss plot
     :param best_roc_plot_save_name: file name for the roc plot
     :param best_conf_mat_save_name: file name for the confusion matrix plot
+    :param shap_dir: directory name which will contain all the shap plots
     :return: the best model from k-fold validation
     """
 
@@ -99,7 +106,7 @@ def k_fold_validation_pancancer(
         kf = StratifiedKFold(n_splits=k, shuffle=True)
     else:
         # INVALID
-        raise(ValueError("mode must be either 'normal' or 'stratified'"))
+        raise (ValueError("mode must be either 'normal' or 'stratified'"))
 
     print("\n" + "=" * 100)
     for fold, (train_index, test_index) in enumerate(kf.split(data, labels)):
@@ -205,7 +212,6 @@ def k_fold_validation_pancancer(
                           "avg_micro_acc3": avg_micro_acc3,
                           "avg_micro_acc5": avg_micro_acc5,
 
-
                           # data for each fold
                           "folds_losses": loss_list,
                           "folds_acc1": acc1_list,
@@ -281,6 +287,21 @@ def k_fold_validation_pancancer(
                           save_to=save_dir / best_conf_mat_save_name,
                           indices=PAN_CANCER_LABELS)
 
+    # SHAP
+    print("Performing SHAP evaluations.")
+    data_shap, samples_shap, slides_shap, labels_shap = resample(data, samples, slides, labels,
+                                                                 stratify=labels,
+                                                                 n_samples=shap_samples,
+                                                                 replace=False)
+    plot_shap_all(m=best_model,
+                  data=torch.FloatTensor(data_shap),
+                  labels=torch.LongTensor(labels_shap),
+                  sample_names=samples_shap,
+                  slide_names=slides_shap,
+                  show_plot=True,
+                  save_to_dir=save_dir / shap_dir,
+                  use_tqdm=True)
+
     # report
     print("-" * 80)
     print(f"Performed {k}-fold cross validation on {best_model.__class__.__name__}, with {epochs} epochs:")
@@ -295,13 +316,13 @@ def k_fold_validation_pancancer(
     print("-" * 80)
     print("=" * 100 + "\n")
 
-
     return best_model
+
 
 if __name__ == '__main__':
     # model creation lambda
-    instantiate_pancancer = lambda : PanCancerClassifier(input_size=34,
-                                                         hidden_size=42,
-                                                         output_size=10)
+    instantiate_pancancer = lambda: PanCancerClassifier(input_size=34,
+                                                        hidden_size=42,
+                                                        output_size=10)
     # call
     k_fold_validation_pancancer(instantiate_pancancer)

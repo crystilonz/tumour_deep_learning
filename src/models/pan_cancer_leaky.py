@@ -11,10 +11,8 @@ class LeakyPanCancerClassifier(nn.Module):
                                               out_features=hidden_size),
                                     nn.LeakyReLU(),
                                     nn.Linear(in_features=hidden_size,
-                                              out_features=output_size),
-                                    nn.Softmax(dim=1))
+                                              out_features=output_size)
+                                    )
 
     def forward(self, x):
         return self.layers(x)
-
-

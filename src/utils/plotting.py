@@ -6,12 +6,24 @@ import seaborn as sn
 import pandas as pd
 from typing import Any, List
 import os
+import shap
+from typing import Literal
+from utils.shap_utils import shap_beeswarm_bar_pancancer, shap_waterfall_pancancer
+import tqdm
 
 ENV_SHOW_PLOT = os.environ.get('ENV_SHOW_PLOT')
 if ENV_SHOW_PLOT:
     ENV_SHOW_PLOT = False if ENV_SHOW_PLOT == 'False' else True
 else:
     ENV_SHOW_PLOT = True
+
+# SHAP PLOT NAMES
+SHAP_PLOT_NAMES = {"waterfall_correct" : "shap_waterfall_correct_plot",
+                   "waterfall_incorrect" : "shap_waterfall_incorrect_plot",
+                   "waterfall_all" : "shap_waterfall_all_plot",
+                   "beeswarm_bar_positive" : "shap_beeswarm_bar_positive_plot",
+                   "beeswarm_bar_negative" : "shap_beeswarm_bar_negative_plot",
+                   "beeswarm_bar_all" : "shap_beeswarm_bar_all_plot"}
 
 
 def plot_loss(training_loss: [float],
@@ -47,7 +59,7 @@ def plot_roc(false_pos,
              true_pos,
              threshold,
              auroc_by_class: torch.Tensor = None,
-             auroc = None,
+             auroc=None,
              title: str = None,
              label_dict: dict[int, str] = None,
              save_to: str | Path = None,
@@ -62,7 +74,7 @@ def plot_roc(false_pos,
             label += f" (AUC = {auroc_by_class[i].item():.05f})"
         plt.plot(false_pos[i], true_pos[i], label=label)
     if title:
-        title +=  f" (average AUC = {auroc:.05f})" if auroc else ""
+        title += f" (average AUC = {auroc:.05f})" if auroc else ""
     else:
         title = f"ROC (average AUC = {auroc:.05f})" if auroc else "ROC"
     plt.title(title)
@@ -79,6 +91,7 @@ def plot_roc(false_pos,
         plt.show()
 
     plt.close()
+
 
 def plot_confusion_matrix(cm: np.ndarray | torch.Tensor,
                           save_to: str | Path = None,
@@ -106,11 +119,147 @@ def plot_confusion_matrix(cm: np.ndarray | torch.Tensor,
     plt.close()
 
 
+def plot_shap_beeswarm_bar(m: torch.nn.Module,
+                           data: torch.Tensor,
+                           labels: torch.Tensor = None,
+                           e: shap.DeepExplainer = None,
+                           model_pred: Literal["positive", "negative", "both"] = "both",
+                           show_plot: bool = True,
+                           save_to: str | Path = None) -> None:
+    shap_beeswarm_bar_pancancer(m, data, labels,
+                                e=e, model_pred=model_pred)
+
+    if save_to is not None:
+        plt.savefig(save_to)
+
+    if show_plot and ENV_SHOW_PLOT:
+        plt.show()
+
+    plt.close()
 
 
+def plot_shap_waterfall(m: torch.nn.Module,
+                        data: torch.Tensor,
+                        labels: torch.Tensor,
+                        e: shap.DeepExplainer = None,
+                        correct: Literal["true", "false", "both"] = "true",
+                        sample_names=None,
+                        slide_names=None,
+                        show_plot: bool = True,
+                        save_to: str | Path = None) -> None:
+
+    shap_waterfall_pancancer(m, data, labels,
+                             e=e,
+                             correct=correct,
+                             sample_names=sample_names,
+                             slide_names=slide_names)
+
+    if save_to is not None:
+        plt.savefig(save_to)
+
+    if show_plot and ENV_SHOW_PLOT:
+        plt.show()
+
+    plt.close()
 
 
+def plot_shap_all(m: torch.nn.Module,
+                  data: torch.Tensor,
+                  labels: torch.Tensor,
+                  e: shap.DeepExplainer = None,
+                  sample_names=None,
+                  slide_names=None,
+                  show_plot: bool = True,
+                  save_to_dir: str | Path = None,
+                  use_tqdm = False) -> None:
 
+    if e is None:
+        e = shap.DeepExplainer(m, data)
+
+    saving = False if save_to_dir is None else True
+
+    if saving:
+        if not save_to_dir.exists():
+            save_to_dir.mkdir(parents=True)
+
+
+    if use_tqdm:
+        progress = tqdm.tqdm(total=6, desc="SHAP Progress")
+    else:
+        progress = None
+
+    # waterfall plots
+    shap_waterfall_pancancer(m, data, labels,
+                             e=e,
+                             correct="true",
+                             sample_names=sample_names,
+                             slide_names=slide_names)
+    if saving:
+        plt.savefig(save_to_dir / SHAP_PLOT_NAMES["waterfall_correct"])
+
+    if show_plot and ENV_SHOW_PLOT:
+        plt.show()
+    plt.close()
+    if use_tqdm: progress.update(1)
+
+    shap_waterfall_pancancer(m, data, labels,
+                             e=e,
+                             correct="false",
+                             sample_names=sample_names,
+                             slide_names=slide_names)
+
+    if saving:
+        plt.savefig(save_to_dir / SHAP_PLOT_NAMES["waterfall_incorrect"])
+
+    if show_plot and ENV_SHOW_PLOT:
+        plt.show()
+    plt.close()
+    if use_tqdm: progress.update(1)
+
+    shap_waterfall_pancancer(m, data, labels,
+                             e=e,
+                             correct="both",
+                             sample_names=sample_names,
+                             slide_names=slide_names)
+    if saving:
+        plt.savefig(save_to_dir / SHAP_PLOT_NAMES["waterfall_all"])
+    if show_plot and ENV_SHOW_PLOT:
+        plt.show()
+    plt.close()
+    if use_tqdm: progress.update(1)
+
+    # beeswarm/bar
+    shap_beeswarm_bar_pancancer(m, data, labels,
+                                e=e,
+                                model_pred="positive")
+    if saving:
+        plt.savefig(save_to_dir / SHAP_PLOT_NAMES["beeswarm_bar_positive"])
+    if show_plot and ENV_SHOW_PLOT:
+        plt.show()
+    plt.close()
+    if use_tqdm: progress.update(1)
+
+    shap_beeswarm_bar_pancancer(m, data, labels,
+                                e=e,
+                                model_pred="negative")
+    if saving:
+        plt.savefig(save_to_dir / SHAP_PLOT_NAMES["beeswarm_bar_negative"])
+    if show_plot and ENV_SHOW_PLOT:
+        plt.show()
+    plt.close()
+    if use_tqdm: progress.update(1)
+
+    shap_beeswarm_bar_pancancer(m, data, labels,
+                                e=e,
+                                model_pred="both")
+    if saving:
+        plt.savefig(save_to_dir / SHAP_PLOT_NAMES["beeswarm_bar_all"])
+    if show_plot and ENV_SHOW_PLOT:
+        plt.show()
+    plt.close()
+    if use_tqdm:
+        progress.update(1)
+        progress.close()
 
 
 
