@@ -262,6 +262,52 @@ def plot_shap_all(m: torch.nn.Module,
         progress.close()
 
 
+def k_folds_loss_to_pandas(loss_folds: [[float]]) -> pd.DataFrame:
+    df = None
+    for fold_num, fold in enumerate(loss_folds):
+        for epoch, loss in enumerate(fold):
+            this_epoch = pd.DataFrame({"fold": fold_num, "epoch": epoch, "loss": loss},
+                                      columns=["fold", "epoch", "loss"],
+                                      index=[0])
+            df = pd.concat([df, this_epoch], ignore_index=True)
+
+    return df
+
+
+def plot_loss_k_folds(training_loss_folds: [[float]],
+                      testing_loss_folds: [[float]],
+                      save_to: str | Path = None,
+                      show_plot: bool = True) -> None:
+
+    # testing dataframe
+    training_df = k_folds_loss_to_pandas(training_loss_folds)
+    training_df['phase'] = "training"
+
+    testing_df = k_folds_loss_to_pandas(testing_loss_folds)
+    testing_df['phase'] = "testing"
+
+    combined_df = pd.concat([training_df, testing_df])
+
+    plt.figure(figsize=(7,7))
+
+    # training
+    sn.lineplot(combined_df, x="epoch", y="loss", hue="phase", errorbar="sd", err_style="band")
+    plt.ylim(0)
+    plt.xlabel("Epochs")
+    plt.ylabel("Loss")
+
+    title = f"{len(training_loss_folds)}-Fold Validation Loss"
+    plt.title(title)
+
+    if save_to is not None:
+        plt.savefig(save_to)
+
+    if show_plot and ENV_SHOW_PLOT:
+        plt.show()
+
+    plt.close()
+
+
 
 
 

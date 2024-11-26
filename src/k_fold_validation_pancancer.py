@@ -11,7 +11,7 @@ from models.pan_cancer_classifier import PanCancerClassifier
 from utils.datadump import save_to_json
 from utils.multiclass_evaluate import accuracy, auroc, roc, confusion_matrix, recall, precision, f_beta, \
     evaluate_multiclass_classifier
-from utils.plotting import plot_loss, plot_roc, plot_confusion_matrix, plot_shap_all
+from utils.plotting import plot_loss, plot_roc, plot_confusion_matrix, plot_shap_all, plot_loss_k_folds
 from utils.training import train_model, save_model
 from typing import Literal
 
@@ -23,6 +23,7 @@ DEFAULT_VALIDATION_RESULTS_NAME = "k_fold_validation.json"
 DEFAULT_BEST_MODEL_METRICS_NAME = "best_metrics.json"
 DEFAULT_PLOT_NAME = "best_loss_plot"
 DEFAULT_ROC_NAME = "best_roc"
+DEFAULT_FOLD_LOSS_CURVE_NAME = "fold_loss_curve"
 DEFAULT_CONFUSION_MATRIX_NAME = "best_confusion_matrix"
 DEFAULT_SHAP_DIR = "shap_figures"
 DEFAULT_EPOCH = 30
@@ -48,6 +49,7 @@ def k_fold_validation_pancancer(
         best_loss_plot_save_name: str | Path = DEFAULT_PLOT_NAME,
         best_roc_plot_save_name: str | Path = DEFAULT_ROC_NAME,
         best_conf_mat_save_name: str | Path = DEFAULT_CONFUSION_MATRIX_NAME,
+        fold_loss_curve_save_name: str | Path = DEFAULT_FOLD_LOSS_CURVE_NAME,
         shap_dir: str | Path = DEFAULT_SHAP_DIR
 ) -> torch.nn.Module:
     """
@@ -222,6 +224,10 @@ def k_fold_validation_pancancer(
                           "folds_auroc": auroc_list,
                           "folds_f_one": f_one_list,
 
+                          # loss graph stuffs
+                          "folds_epochs_testing_losses": testing_losses_folds,
+                          "folds_epochs_training_losses": training_losses_folds,
+
                           # micro
                           "folds_micro_acc1": micro_acc1_list,
                           "folds_micro_acc3": micro_acc3_list,
@@ -286,6 +292,10 @@ def k_fold_validation_pancancer(
     plot_confusion_matrix(best_metrics['confusion_matrix'],
                           save_to=save_dir / best_conf_mat_save_name,
                           indices=PAN_CANCER_LABELS)
+
+    plot_loss_k_folds(training_loss_folds=training_losses_folds,
+                      testing_loss_folds=testing_losses_folds,
+                      save_to=save_dir / fold_loss_curve_save_name)
 
     # SHAP
     print("Performing SHAP evaluations.")

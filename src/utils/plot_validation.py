@@ -4,6 +4,9 @@ import seaborn as sn
 import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
+
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
+
 from utils.plotting import ENV_SHOW_PLOT
 
 def flatten(list_of_lists):
@@ -22,6 +25,7 @@ def plot_validation(parent_dir: Path,
     model_names: list[str] = []  # list of model names
     losses: list[list[float]] = []  # list of list of loss from each fold
     top1_accs: list[list[float]] = []  # list of list of top 1 accuracy from each fold
+    top3_accs: list[list[float]] = []  # list of list of top 3 accuracy from each fold
     aurocs: list[list[float]] = []  # list of list of aurocs
 
     avg_losses: list[float] = []
@@ -55,6 +59,7 @@ def plot_validation(parent_dir: Path,
         model_names.append(metrics_dict['Model Name'])
         losses.append(metrics_dict['folds_losses'])
         top1_accs.append(metrics_dict['folds_micro_acc1'])
+        top3_accs.append(metrics_dict['folds_micro_acc3'])
         aurocs.append(metrics_dict['folds_auroc'])
 
         avg_losses.append(metrics_dict['avg_loss'])
@@ -94,48 +99,99 @@ def plot_validation(parent_dir: Path,
     for i in range(models_num):
         model_names_col += ([model_names[i]] * len(losses[i]))
 
+    # inset plot params
+    x_start = -.25
+    x_width = models_num - 0.5
+
     # Facet plot
     sn.set_color_codes("deep")
     sn.set_theme(style="whitegrid")
+    colors = sn.color_palette("Paired")
     font = {'size': 16}
     plt.rc('font', **font)
     fig = plt.figure(figsize=(30, 20))
     fig.suptitle('K-Fold Validation', fontsize=50)
 
-    # loss plot
+    # acc1 plot
     ax1 = fig.add_subplot(231)
-    ax1.set_title("Loss", fontsize=40)
-    ax1.set_xticklabels(model_names, rotation=45, ha='right', fontsize=14)
-    # build dictionary
-    losses_dict = {'Model Name': model_names_col,
-                   'Loss': flatten(losses)}
-    losses_df = pd.DataFrame(losses_dict)
-    sn.violinplot(losses_df, x="Model Name", y="Loss", color="r", ax=ax1, inner=None, fill=False, width=1, linewidth=5)
-    sn.swarmplot(data=losses_df, x="Model Name", y="Loss", color="r", size=10, ax=ax1)
-    ax1.set(xlabel=None)
-    ax1.tick_params(axis='y', which='major', labelsize=14)
-    ax1.tick_params(axis='x', bottom=True)
-    ax1.set_ylabel(ax1.get_ylabel(), fontsize=24)
-    ax1.grid(visible=True, which='major', axis='x', linestyle='--')
+    ax1.set_title("Top-1 Accuracy", fontsize=40)
+    ax1.set_xticklabels(model_names, rotation=45, ha="right", fontsize=16)
 
-
-    # accuracy plot
-    ax2 = fig.add_subplot(232)
-    ax2.set_title("Top-1 Accuracy", fontsize=40)
-    ax2.set_xticklabels(model_names, rotation=45, ha="right", fontsize=16)
     # build dictionary
     acc_dict = {
         'Model Name': model_names_col,
         'Accuracy (%)': [flatten(top1_accs)[i] * 100 for i in range(len(flatten(top1_accs)))],
     }
     acc_df = pd.DataFrame(acc_dict)
-    sn.violinplot(acc_df, x="Model Name", y="Accuracy (%)", color="g", ax=ax2, inner=None, fill=False, width=1, linewidth=5)
-    sn.swarmplot(acc_df, x="Model Name", y="Accuracy (%)", color="g", size=10, ax=ax2)
+
+    # violin plot codes
+    # sn.violinplot(acc_df, x="Model Name", y="Accuracy (%)", color="g", ax=ax2, inner=None, fill=False, width=1, linewidth=5)
+    # sn.swarmplot(acc_df, x="Model Name", y="Accuracy (%)", color="g", size=10, ax=ax2)
+
+    sn.barplot(data=acc_df, x="Model Name", y="Accuracy (%)", errorbar="sd", color=colors[0], ax=ax1, err_kws={'color': colors[1]})
+    plt.ylim(ymax=100)
+    ax1.set(xlabel=None)
+    ax1.tick_params(axis='y', which='major', labelsize=14)
+    ax1.tick_params(axis='x', bottom=True)
+    ax1.set_ylabel(ax1.get_ylabel(), fontsize=24)
+
+    # zoomed acc1 plot
+    # loc values
+    # 2---8---1
+    # |   |   |
+    # 6---10--5/7
+    # |   |   |
+    # 3---9---4
+    axins1 = inset_axes(ax1, width="50%", height="40%", loc="lower right")
+    sn.barplot(data=acc_df, x="Model Name", y="Accuracy (%)", errorbar="sd", color=colors[0], ax=axins1, err_kws={'color': colors[1]})
+    acc1_min = np.min(avg_acc1)
+    acc1_max = np.max(avg_acc1)
+    acc1_ymin = (acc1_min * 100) - 5
+    acc1_ymax = (acc1_max * 100) + 5
+    axins1.set_ylim(acc1_ymin, acc1_ymax)
+    plt.xticks(visible=False)
+    plt.yticks(visible=False)
+    axins1.set(xlabel=None, ylabel=None)
+    axins1.bar_label(axins1.containers[0], size=10, fmt="{:.02f}%", label_type='center', weight='bold')
+    ins1 = ax1.indicate_inset((x_start, acc1_ymin, x_width, acc1_ymax - acc1_ymin), axins1)
+    ins1.connectors[0].set_visible(True)
+    ins1.connectors[1].set_visible(False)
+    ins1.connectors[2].set_visible(False)
+    ins1.connectors[3].set_visible(True)
+
+    # acc3 plot
+    ax2 = fig.add_subplot(232)
+    ax2.set_title("Top-3 Accuracy", fontsize=40)
+    ax2.set_xticklabels(model_names, rotation=45, ha="right", fontsize=16)
+    # build dictionary
+    acc3_dict = {
+        'Model Name': model_names_col,
+        'Accuracy (%)': [flatten(top3_accs)[i] * 100 for i in range(len(flatten(top3_accs)))],
+    }
+    acc3_df = pd.DataFrame(acc3_dict)
+    sn.barplot(data=acc3_df, x="Model Name", y="Accuracy (%)", errorbar="sd", color=colors[2], ax=ax2, err_kws={'color': colors[3]})
+    plt.ylim(ymax=100)
     ax2.set(xlabel=None)
     ax2.tick_params(axis='y', which='major', labelsize=14)
     ax2.tick_params(axis='x', bottom=True)
     ax2.set_ylabel(ax2.get_ylabel(), fontsize=24)
-    ax2.grid(visible=True, which='major', axis='x', linestyle='--')
+
+    axins2 = inset_axes(ax2, width="50%", height="40%", loc="lower right")
+    sn.barplot(data=acc3_df, x="Model Name", y="Accuracy (%)", errorbar="sd", color=colors[2], ax=axins2, err_kws={'color': colors[3]})
+    acc3_min = np.min(avg_acc3)
+    acc3_max = np.max(avg_acc3)
+    acc3_ymin = (acc3_min * 100) - 5
+    acc3_ymax = (acc3_max * 100) + 5
+    axins2.set_ylim(acc3_ymin, acc3_ymax)
+    plt.xticks(visible=False)
+    plt.yticks(visible=False)
+    axins2.set(xlabel=None, ylabel=None)
+    axins2.bar_label(axins2.containers[0], size=10, fmt="{:.02f}%", label_type='center', weight='bold')
+    ins2 = ax2.indicate_inset((x_start, acc3_ymin, x_width, acc3_ymax - acc3_ymin), axins2)
+    ins2.connectors[0].set_visible(True)
+    ins2.connectors[1].set_visible(False)
+    ins2.connectors[2].set_visible(False)
+    ins2.connectors[3].set_visible(True)
 
     # auroc plot
     ax3 = fig.add_subplot(233)
@@ -147,13 +203,28 @@ def plot_validation(parent_dir: Path,
         'AUROC' : flatten(aurocs)
     }
     auroc_df = pd.DataFrame(auroc_dict)
-    sn.violinplot(auroc_df, x="Model Name", y="AUROC", color="b", ax=ax3, inner=None, fill=False, width=1, linewidth=5)
-    sn.swarmplot(auroc_df, x="Model Name", y="AUROC", color="b", size=10, ax=ax3)
+    sn.barplot(data=auroc_df, x="Model Name", y="AUROC", color=colors[4], ax=ax3, errorbar="sd", err_kws={'color': colors[5]})
+    plt.ylim(ymax=1.0)
     ax3.set(xlabel=None)
     ax3.tick_params(axis='y', which='major', labelsize=14)
     ax3.tick_params(axis='x', bottom=True)
     ax3.set_ylabel(ax3.get_ylabel(), fontsize=24)
-    ax3.grid(visible=True, which='major', axis='x', linestyle='--')
+
+    # inset plot
+    axins3 = inset_axes(ax3, width="50%", height="40%", loc="lower right")
+    sn.barplot(data=auroc_df, x="Model Name", y="AUROC", errorbar="sd", color=colors[4], ax=axins3, err_kws={'color': colors[5]})
+    auroc_ymin = np.min(avg_auroc) - 0.025
+    auroc_ymax = np.max(avg_auroc) + 0.025
+    axins3.set_ylim(auroc_ymin, auroc_ymax)
+    plt.xticks(visible=False)
+    plt.yticks(visible=False)
+    axins3.set(xlabel=None, ylabel=None)
+    axins3.bar_label(axins3.containers[0], size=10, fmt="{:.4f}", label_type='center', weight='bold')
+    ins3 = ax3.indicate_inset((x_start, auroc_ymin, x_width, auroc_ymax - auroc_ymin), axins3)
+    ins3.connectors[0].set_visible(True)
+    ins3.connectors[1].set_visible(False)
+    ins3.connectors[2].set_visible(False)
+    ins3.connectors[3].set_visible(True)
 
     # table
     ax4 = fig.add_subplot(212)
@@ -195,7 +266,6 @@ def plot_validation(parent_dir: Path,
 
     if ENV_SHOW_PLOT:
         plt.show()
-
 
 
 if __name__ == "__main__":
