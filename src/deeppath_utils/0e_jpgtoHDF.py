@@ -1,3 +1,11 @@
+"""
+The MIT License (MIT)
+
+This file is modified by Jetanat Sihanatkathakul for Level 4 Project.
+
+The original attribution can be seen below.
+"""
+
 '''
 The MIT License (MIT)
 
@@ -323,8 +331,11 @@ for j in range(0,sub_chunks):
        if image.shape[1] > HEIGHT:
            image =image[:,:HEIGHT,:]
        image = np.uint8(image)
-       sample = slide[:args.sampleID]
-       slide = slide[:args.slideID]
+       # sample = slide[:args.sampleID]
+       # slide = slide[:args.slideID]
+       # changed
+       sample = slide[:]
+       slide = slide[:]
        #print("shape:")
        #print(image.shape[0], WIDTH, image.shape[1], HEIGHT)
        if image.shape[0] == WIDTH and image.shape[1] == HEIGHT:
