@@ -1,7 +1,9 @@
 """
-The MIT License (MIT)
-
-This file is modified by Jetanat Sihanatkathakul for Level 4 Project.
+This file was modified by Jetanat Sihanatkathakul for Level 4 Project.
+The purpose of the modification is to:
+    * remove parallel HDF5 file process to solve dependency issues.
+    * change field lengths to prevent truncation of data
+    * troubleshooting to let this script work with Windows style directory path
 
 The original attribution can be seen below.
 """
