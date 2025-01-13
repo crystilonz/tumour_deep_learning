@@ -115,6 +115,7 @@ def save_model(model: nn.Module,
     if save_path.suffix != '.pt' and save_path.suffix != '.pth':
         save_path = save_path.parent / (save_path.stem + '.pt')
 
-    torch.save(model.state_dict(), save_path)
+    torch.save(obj=model.state_dict(),
+               f=save_path)
 
 

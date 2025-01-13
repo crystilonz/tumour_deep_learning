@@ -3,6 +3,8 @@ import torch.nn as nn
 from torchmetrics.classification import MulticlassAccuracy, MulticlassAUROC, MulticlassROC, MulticlassConfusionMatrix, \
     MulticlassPrecision, MulticlassRecall, MulticlassFBetaScore
 from typing import Optional, Literal
+from pathlib import Path
+from data_manipulation.pancancer_from_csv import get_pancancer_data_from_csv
 
 
 def accuracy(model: torch.nn.Module,
@@ -222,7 +224,6 @@ def evaluate_multiclass_classifier(
     model.eval()
     with torch.no_grad():
         output = model(data)
-
         # run metrics
         top1_acc = top1_acc_fn(output, truth)
         top3_acc = top3_acc_fn(output, truth)
@@ -289,6 +290,7 @@ def evaluate_multiclass_classifier(
         "micro_top3_acc": micro_top3_acc,
         "micro_top5_acc": micro_top5_acc
     }
+
 
 
 

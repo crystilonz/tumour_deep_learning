@@ -10,6 +10,7 @@ import shap
 from typing import Literal
 from utils.shap_utils import shap_beeswarm_bar_pancancer, shap_waterfall_pancancer
 import tqdm
+import matplotlib.axes
 
 ENV_SHOW_PLOT = os.environ.get('ENV_SHOW_PLOT')
 if ENV_SHOW_PLOT:
@@ -18,12 +19,12 @@ else:
     ENV_SHOW_PLOT = True
 
 # SHAP PLOT NAMES
-SHAP_PLOT_NAMES = {"waterfall_correct" : "shap_waterfall_correct_plot",
-                   "waterfall_incorrect" : "shap_waterfall_incorrect_plot",
-                   "waterfall_all" : "shap_waterfall_all_plot",
-                   "beeswarm_bar_positive" : "shap_beeswarm_bar_positive_plot",
-                   "beeswarm_bar_negative" : "shap_beeswarm_bar_negative_plot",
-                   "beeswarm_bar_all" : "shap_beeswarm_bar_all_plot"}
+SHAP_PLOT_NAMES = {"waterfall_correct": "shap_waterfall_correct_plot",
+                   "waterfall_incorrect": "shap_waterfall_incorrect_plot",
+                   "waterfall_all": "shap_waterfall_all_plot",
+                   "beeswarm_bar_positive": "shap_beeswarm_bar_positive_plot",
+                   "beeswarm_bar_negative": "shap_beeswarm_bar_negative_plot",
+                   "beeswarm_bar_all": "shap_beeswarm_bar_all_plot"}
 
 
 def plot_loss(training_loss: [float],
@@ -147,7 +148,6 @@ def plot_shap_waterfall(m: torch.nn.Module,
                         slide_names=None,
                         show_plot: bool = True,
                         save_to: str | Path = None) -> None:
-
     shap_waterfall_pancancer(m, data, labels,
                              e=e,
                              correct=correct,
@@ -171,8 +171,7 @@ def plot_shap_all(m: torch.nn.Module,
                   slide_names=None,
                   show_plot: bool = True,
                   save_to_dir: str | Path = None,
-                  use_tqdm = False) -> None:
-
+                  use_tqdm=False) -> None:
     if e is None:
         e = shap.DeepExplainer(m, data)
 
@@ -181,7 +180,6 @@ def plot_shap_all(m: torch.nn.Module,
     if saving:
         if not save_to_dir.exists():
             save_to_dir.mkdir(parents=True)
-
 
     if use_tqdm:
         progress = tqdm.tqdm(total=6, desc="SHAP Progress")
@@ -278,7 +276,6 @@ def plot_loss_k_folds(training_loss_folds: [[float]],
                       testing_loss_folds: [[float]],
                       save_to: str | Path = None,
                       show_plot: bool = True) -> None:
-
     # testing dataframe
     training_df = k_folds_loss_to_pandas(training_loss_folds)
     training_df['phase'] = "training"
@@ -288,7 +285,7 @@ def plot_loss_k_folds(training_loss_folds: [[float]],
 
     combined_df = pd.concat([training_df, testing_df])
 
-    plt.figure(figsize=(7,7))
+    plt.figure(figsize=(7, 7))
 
     # training
     sn.lineplot(combined_df, x="epoch", y="loss", hue="phase", errorbar="sd", err_style="band")
@@ -308,7 +305,70 @@ def plot_loss_k_folds(training_loss_folds: [[float]],
     plt.close()
 
 
+def per_class_acc_barplot(acc1: torch.Tensor,
+                          acc3: torch.Tensor,
+                          acc5: torch.Tensor,
+                          class_list: list[str],
+                          save_to: str | Path = None,
+                          show_plot: bool = True) -> None:
+    plt.figure(figsize=(14, 7))
+
+    acc1 = acc1.numpy()
+    acc3 = acc3.numpy()
+    acc5 = acc5.numpy()
+
+    classes = []
+    acc_top = []
+    vals = []
+
+    for num, cls in enumerate(class_list):
+        # append top accs
+        classes.append(cls)
+        acc_top.append(1)
+        vals.append(acc1[num])
+
+        classes.append(cls)
+        acc_top.append(3)
+        vals.append(acc3[num])
+
+        classes.append(cls)
+        acc_top.append(5)
+        vals.append(acc5[num])
+
+    plt_dict = {'Class': classes,
+                'Top-k Acc': acc_top,
+                'Accuracy': vals}
+
+    plt_df = pd.DataFrame(plt_dict)
+
+    sn.barplot(data=plt_df, x="Class", y="Accuracy", hue="Top-k Acc")
+    plt.title('Per-class Accuracy')
+    if save_to is not None:
+        plt.savefig(save_to)
+
+    if show_plot and ENV_SHOW_PLOT:
+        plt.show()
+
+    plt.close()
 
 
+def per_class_auroc_plot(auroc: torch.Tensor,
+                         class_list: list[str],
+                         save_to: str | Path = None,
+                         show_plot: bool = True) -> None:
+
+    plt.figure(figsize=(14, 7))
+    auroc = auroc.numpy()
+
+    sn.barplot(x=class_list, y=auroc)
+    plt.title('Per-class AUROC')
+
+    if save_to is not None:
+        plt.savefig(save_to)
+
+    if show_plot and ENV_SHOW_PLOT:
+        plt.show()
+
+    plt.close()
 
 
