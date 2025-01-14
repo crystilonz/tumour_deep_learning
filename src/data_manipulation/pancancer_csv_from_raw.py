@@ -54,21 +54,34 @@ def clr_frequency(freq_np: np.ndarray,
 
 
 
-def df_from_space_seperated_values(ssv_path: Path | str) -> pd.DataFrame:
+def df_from_space_seperated_values(ssv_path: Path | str,
+                                   format: Literal['None', 'TCGA']) -> pd.DataFrame:
     with open(ssv_path, 'r') as f:
         df = pd.read_csv(f, sep=' ', header=None)
     df.rename(columns={df.columns[0]: 'combined_name', df.columns[1]: 'classification', df.columns[2]: 'label'},
               inplace=True)
-    names_df = df['combined_name'].apply((lambda x: pd.Series(get_sample_slide_name_from_combined(x))))
+    match format:
+        case 'TCGA':
+            names_df = df['combined_name'].apply((lambda x: pd.Series(get_sample_slide_name_from_combined_TCGA(x))))
+        case 'None':
+            names_df = df['combined_name'].apply((lambda x: pd.Series(get_sample_slide_name_from_combined_dupe(x))))
+        case _:
+            # default to dupe
+            print(f'Wrong format. Expected TCGA or None, received {format}. Defaulting to None')
+            names_df = df['combined_name'].apple((lambda x: pd.Series(get_sample_slide_name_from_combined_dupe(x))))
+
     names_df.rename(columns={names_df.columns[0]: 'sample_name', names_df.columns[1]: 'slide_name'}, inplace=True)
     ddf = names_df.join(df)
     return ddf
 
 
-def get_sample_slide_name_from_combined(combined_str: str) -> [str]:
+def get_sample_slide_name_from_combined_TCGA(combined_str: str) -> [str]:
     parts = combined_str.split('_')
     sample = parts[0] + '_' + parts[1]
     return [sample, parts[2]]
+
+def get_sample_slide_name_from_combined_dupe(combined_str: str) -> [str]:
+    return [combined_str, combined_str]
 
 
 def build_representation_vector(leiden_df: pd.DataFrame,
@@ -116,14 +129,15 @@ def build_csv_from_raw(leiden_csv: Path | str,
                        classes_sample_column_name: str = 'sample_name',
                        classes_combined_column_name: str = 'combined_name',
                        classes_label_column_name: str = 'label',
-                       is_classes_space_separated: bool = True):
+                       is_classes_space_separated: bool = True,
+                       name_format: Literal['TCGA', 'None'] = 'None'):
 
     with open(leiden_csv, 'r') as leiden_f:
         leiden_df = pd.read_csv(leiden_f)
 
     with open(classes_csv, 'r') as classes_f:
         if is_classes_space_separated:
-            classes_df = df_from_space_seperated_values(classes_csv)
+            classes_df = df_from_space_seperated_values(classes_csv, format=name_format)
         else:
             classes_df = pd.read_csv(classes_f)
 
@@ -159,4 +173,5 @@ def filter_empty_tiles(leiden_df: pd.DataFrame,
 if __name__ == '__main__':
     build_csv_from_raw(leiden_csv='/Users/muang/PycharmProjects/tumour_deep_learning/data/EXT_cohort/EXT_he_combined_leiden_2p0__fold1.csv',
                        classes_csv='/Users/muang/PycharmProjects/tumour_deep_learning/data/EXT_cohort/classes.csv',
-                       save_to='../datasets/external_pancancer/ext.csv')
+                       save_to='../datasets/external_pancancer/ext.csv',
+                       name_format = 'TCGA')
