@@ -26,7 +26,9 @@ def validate_with_external_set(model: nn.Module,
     if output_dir is None:
         output_dir = DEFAULT_DIRECTORY / model.__class__.__name__
     elif not isinstance(output_dir, Path):
-        output_dir = Path(output_dir)
+        output_dir = Path(output_dir) / model.__class__.__name__
+    else:
+        output_dir = output_dir / model.__class__.__name__
 
     samples, slides, data, labels = get_pancancer_data_from_csv(external_csv)
     model.load_state_dict(torch.load(checkpoint, weights_only=True))

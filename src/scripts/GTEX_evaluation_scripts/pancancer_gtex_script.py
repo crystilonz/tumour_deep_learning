@@ -1,7 +1,6 @@
 from utils.external_evaluate import validate_with_external_set
 from models.pan_cancer_classifier import PanCancerClassifier
-import GTEX_details
-
+from script_info import GTEX_details
 
 if __name__ == '__main__':
     model = PanCancerClassifier(input_size=34,
