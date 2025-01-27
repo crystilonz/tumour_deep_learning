@@ -4,7 +4,7 @@ from pathlib import Path
 from utils.multiclass_evaluate import evaluate_multiclass_classifier
 from utils.datadump import save_to_json
 from data_manipulation.pancancer_from_csv import get_pancancer_data_from_csv, PAN_CANCER_LABELS, PAN_CANCER_DICT
-from utils.plotting import plot_roc, plot_confusion_matrix, per_class_auroc_plot, per_class_acc_barplot
+from utils.plotting import plot_roc, plot_confusion_matrix, per_class_auroc_plot, per_class_acc_barplot, plot_shap_all
 import numpy as np
 
 DEFAULT_DIRECTORY = Path(__file__).parent.parent / 'external_validation_results'
@@ -15,6 +15,7 @@ ROC_FILE_NAME = r'roc'
 CLASS_AUROC_FILE_NAME = r'class_auroc'
 CLASS_ACC_FILE_NAME = r'class_accuracy'
 CHECKPOINT_NAME = r'checkpoint.pt'
+SHAP_DIR = r'SHAP'
 
 
 def validate_with_external_set(model: nn.Module,
@@ -89,5 +90,16 @@ def validate_with_external_set(model: nn.Module,
                           acc5=results['class_top5_acc'],
                           class_list=PAN_CANCER_LABELS,
                           save_to=output_dir / CLASS_ACC_FILE_NAME)
+
+    # SHAP
+    plot_shap_all(m=model,
+                  data=data_tensor,
+                  labels=labels_tensor,
+                  sample_names=samples,
+                  slide_names=slides,
+                  show_plot=True,
+                  save_to_dir=output_dir / SHAP_DIR,
+                  plot_waterfall=True,
+                  use_tqdm=False)
 
     return results

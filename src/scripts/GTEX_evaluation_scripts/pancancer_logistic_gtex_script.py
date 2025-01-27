@@ -4,7 +4,6 @@ from script_info import GTEX_details
 
 if __name__ == '__main__':
     model = PanCancerLogisticRegression(input_size=34,
-                                        hidden_size=42,
                                         output_size=10)
 
     validate_with_external_set(model=model,

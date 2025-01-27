@@ -72,6 +72,16 @@ def shap_waterfall_pancancer(m: torch.nn.Module,
         shap_values_in_class = plotting_shap_values[plotting_labels == sample_class]
         predictions_in_class = plotting_predictions[plotting_labels == sample_class]
 
+        # check if class is not empty
+        if len(shap_values_in_class) <= 0:
+            # class is empty
+            # mark as empty
+            plt.subplot(1, 10, sample_class + 1)
+            class_n = PAN_CANCER_LABELS[sample_class]
+            plt.text(0.5, 0.5, f'No {class_n} samples', fontweight='bold', fontsize=36, ha='center', va='center')
+            plt.axis('off')
+            continue
+
         # random sample
         sample_num = randrange(len(shap_values_in_class))
 
@@ -143,6 +153,15 @@ def shap_beeswarm_bar_pancancer(m: torch.nn.Module,
         else:
             class_shap_values = shap_values[:, :, prediction_class]
         class_shap_values.base_values = base_values[prediction_class]
+
+        # check empty
+        if not class_shap_values:
+            # report empty
+            plt.subplot(10, 1, prediction_class + 1)
+            plt.text(0.5, 0.5, f"Empty SHAP for {PAN_CANCER_LABELS[prediction_class]}", va='center', ha='center', fontweight='bold', fontsize=36)
+            plt.axis('off')
+            continue
+
 
         # plot bee swarm on the left
         ax_swarm = plt.subplot(10, 2, (2 * prediction_class) + 1)

@@ -171,6 +171,7 @@ def plot_shap_all(m: torch.nn.Module,
                   slide_names=None,
                   show_plot: bool = True,
                   save_to_dir: str | Path = None,
+                  plot_waterfall:bool = True,
                   use_tqdm=False) -> None:
     if e is None:
         e = shap.DeepExplainer(m, data)
@@ -187,44 +188,48 @@ def plot_shap_all(m: torch.nn.Module,
         progress = None
 
     # waterfall plots
-    shap_waterfall_pancancer(m, data, labels,
-                             e=e,
-                             correct="true",
-                             sample_names=sample_names,
-                             slide_names=slide_names)
-    if saving:
-        plt.savefig(save_to_dir / SHAP_PLOT_NAMES["waterfall_correct"])
+    if plot_waterfall:
+        shap_waterfall_pancancer(m, data, labels,
+                                 e=e,
+                                 correct="true",
+                                 sample_names=sample_names,
+                                 slide_names=slide_names)
+        if saving:
+            plt.savefig(save_to_dir / SHAP_PLOT_NAMES["waterfall_correct"])
 
-    if show_plot and ENV_SHOW_PLOT:
-        plt.show()
-    plt.close()
-    if use_tqdm: progress.update(1)
+        if show_plot and ENV_SHOW_PLOT:
+            plt.show()
+        plt.close()
+        if use_tqdm: progress.update(1)
 
-    shap_waterfall_pancancer(m, data, labels,
-                             e=e,
-                             correct="false",
-                             sample_names=sample_names,
-                             slide_names=slide_names)
 
-    if saving:
-        plt.savefig(save_to_dir / SHAP_PLOT_NAMES["waterfall_incorrect"])
+        shap_waterfall_pancancer(m, data, labels,
+                                 e=e,
+                                 correct="false",
+                                 sample_names=sample_names,
+                                 slide_names=slide_names)
 
-    if show_plot and ENV_SHOW_PLOT:
-        plt.show()
-    plt.close()
-    if use_tqdm: progress.update(1)
+        if saving:
+            plt.savefig(save_to_dir / SHAP_PLOT_NAMES["waterfall_incorrect"])
 
-    shap_waterfall_pancancer(m, data, labels,
-                             e=e,
-                             correct="both",
-                             sample_names=sample_names,
-                             slide_names=slide_names)
-    if saving:
-        plt.savefig(save_to_dir / SHAP_PLOT_NAMES["waterfall_all"])
-    if show_plot and ENV_SHOW_PLOT:
-        plt.show()
-    plt.close()
-    if use_tqdm: progress.update(1)
+        if show_plot and ENV_SHOW_PLOT:
+            plt.show()
+        plt.close()
+        if use_tqdm: progress.update(1)
+
+        shap_waterfall_pancancer(m, data, labels,
+                                 e=e,
+                                 correct="both",
+                                 sample_names=sample_names,
+                                 slide_names=slide_names)
+        if saving:
+            plt.savefig(save_to_dir / SHAP_PLOT_NAMES["waterfall_all"])
+        if show_plot and ENV_SHOW_PLOT:
+            plt.show()
+        plt.close()
+        if use_tqdm: progress.update(1)
+    else:
+        if use_tqdm: progress.update(3)
 
     # beeswarm/bar
     shap_beeswarm_bar_pancancer(m, data, labels,
