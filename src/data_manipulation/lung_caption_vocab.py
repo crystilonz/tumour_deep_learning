@@ -8,7 +8,9 @@ import json
 from utils.files_handling import dict_json_pretty
 
 # special vocab list
-_special_itos = {0: '<PAD>', 1: '<SOS>', 2: '<EOS>', 3: '<UNK>'}  # only change this one
+START_TOK = '<SOS>'
+END_TOK = '<EOS>'
+_special_itos = {0: '<PAD>', 1: START_TOK, 2: END_TOK, 3: '<UNK>'}  # only change this one
 _special_stoi = {s: i for i, s in _special_itos.items()}
 _start_index = len(_special_itos)
 
@@ -89,7 +91,7 @@ class Vocabulary:
 
     def save(self, path:str|Path):
         save_json = {
-            'itos': self.itos,
+            'stoi': self.stoi,
             'min_freq': self.min_freq,
             'max_size': self.max_size,
             'tokenizer': self.tokenizer_text,
@@ -103,15 +105,48 @@ class Vocabulary:
 
     def load(self, path:str|Path):
         with open(path, 'r') as f:
-            json_dict = json.load(f)
+            json_dict = json.load(f, parse_int=int)
 
-        self.itos = json_dict['itos']
-        self.stoi = {s: i for i, s in self.itos.items()}
-        self.length = len(self.itos)
+        self.stoi = json_dict['stoi']
+        self.itos = {i: s for s, i in self.stoi.items()}
+        self.length = len(self.stoi)
         self.min_freq = json_dict['min_freq']
         self.max_size = json_dict['max_size']
         self.tokenizer_text = json_dict['tokenizer']
         self.tokenizer = Vocabulary.resolve_tokenizer(json_dict['tokenizer'])
+
+
+    def translate_from_index_list(self, lst: torch.Tensor|list, show_pad=False):
+        if isinstance(lst, torch.Tensor):
+            lst = lst.tolist()
+
+        if show_pad:
+            lst_tokens = [self.itos[tok] for tok in lst]
+        else:
+            lst_tokens = [self.itos[tok] for tok in lst if tok != self.stoi['<PAD>']]
+        return ' '.join(lst_tokens).replace(' ,', ',').replace(' .', '.')
+
+
+    def trim_sos_eos(self, s:str):
+        # left
+        while True:
+            old_string = s
+            s = s.lstrip(START_TOK).lstrip(' ')
+            if old_string == s:
+                left_trimmed_s = s
+                break
+
+        # right
+        while True:
+            old_string = left_trimmed_s
+            left_trimmed_s = left_trimmed_s.rstrip(END_TOK).lstrip(' ')
+            if old_string == left_trimmed_s:
+                trimmed_s = left_trimmed_s
+                break
+
+        return trimmed_s
+
+
 
 
 def extract_text_list_from_consensus(csv_file: Path|str, col_name:str='consensus'):

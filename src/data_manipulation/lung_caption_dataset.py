@@ -1,9 +1,8 @@
 import pandas as pd
 import torch
 from data_manipulation.lung_caption_vocab import Vocabulary, extract_text_list_from_consensus
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import Dataset
 from torch.nn.utils.rnn import pad_sequence
-from overrides import override
 from pathlib import Path
 
 class LungCaptionDataset(Dataset):
@@ -19,19 +18,17 @@ class LungCaptionDataset(Dataset):
             vector_df = dataframe.iloc[:, vector_idx:(vector_idx + vector_len - 1)]
 
         self.caption_series:pd.Series = dataframe[caption_col_name]
-        self.vector_tensor:torch.Tensor = torch.FloatTensor(vector_df.values())
+        self.vector_tensor:torch.Tensor = torch.FloatTensor(vector_df.values)
         self.vocab:Vocabulary = vocab
 
-    @override
     def __len__(self):
         return len(self.caption_series)
 
-    @override
     def __getitem__(self, idx):
         feature_vector = self.vector_tensor[idx]
         caption = self.caption_series[idx]
 
-        caption_vector = [self.vocab.stoi('<SOS>')] + [self.vocab.numericalize(caption, 'list')] + [self.vocab.stoi('<EOS>')]
+        caption_vector = [self.vocab.stoi['<SOS>']] + self.vocab.numericalize(caption, 'list') + [self.vocab.stoi['<EOS>']]
         caption_tensor = torch.LongTensor(caption_vector)
         return feature_vector, caption_tensor
 
@@ -42,7 +39,7 @@ class LungCaptionDataset(Dataset):
         captions_list = [item[1] for item in batch]
         captions_batch = pad_sequence(captions_list,
                                       batch_first=True,
-                                      padding_value=self.vocab.stoi('<PAD>'),
+                                      padding_value=self.vocab.stoi['<PAD>'],
                                       padding_side='right')
 
         return features_batch, captions_batch
