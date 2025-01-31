@@ -37,8 +37,17 @@ class LSTM(LungRNN):
         return output  # (N, caption_len, vocab_size)
 
     def caption(self, features, max_length=50):
+        caption = self.caption_raw_tokens(features,
+                                          max_length=max_length)
+        return self.vocab.translate_from_index_list(caption)
+
+    def caption_raw_tokens(self,
+                           features: torch.Tensor,
+                           max_length: int) -> list:
+
         caption = []
         lstm_state = None
+        features.squeeze()  # just in case
 
         self.eval()
         with torch.no_grad():
@@ -53,7 +62,8 @@ class LSTM(LungRNN):
                 if self.vocab.itos[prediction.item()] == '<EOS>':
                     break
 
-        return self.vocab.translate_from_index_list(caption)
+        return caption
+
 
     def save_model_and_vocab(self, model_dir, vocab_dir):
         save_model(self, model_dir)

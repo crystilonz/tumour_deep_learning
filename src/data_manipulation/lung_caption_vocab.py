@@ -115,17 +115,19 @@ class Vocabulary:
         self.tokenizer_text = json_dict['tokenizer']
         self.tokenizer = Vocabulary.resolve_tokenizer(json_dict['tokenizer'])
 
-
     def translate_from_index_list(self, lst: torch.Tensor|list, show_pad=False):
+        lst_tokens = self.itos_list(lst, show_pad)
+        return ' '.join(lst_tokens).replace(' ,', ',').replace(' .', '.')
+
+
+    def itos_list(self, lst: torch.Tensor|list, show_pad=False):
         if isinstance(lst, torch.Tensor):
             lst = lst.tolist()
-
         if show_pad:
             lst_tokens = [self.itos[tok] for tok in lst]
         else:
             lst_tokens = [self.itos[tok] for tok in lst if tok != self.stoi['<PAD>']]
-        return ' '.join(lst_tokens).replace(' ,', ',').replace(' .', '.')
-
+        return lst_tokens
 
     def trim_sos_eos(self, s:str):
         # left

@@ -8,6 +8,8 @@ from utils.plotting import plot_loss
 from utils.training import rnn_train_model
 from models.interface.LungRNN import LungRNN
 from models.LSTM import LSTM
+from utils.text_model_evaluate import bleu, rouge
+from utils.datadump import save_to_json
 
 DEFAULT_DATA_FILE_PATH = Path(__file__).parent / "datasets" / "lung_text" / "TCGA_Lung_consensus.csv"
 DEFAULT_VOCAB_FILE_PATH = Path(__file__).parent / "datasets" / "lung_text" / "vocab.json"
@@ -18,6 +20,8 @@ DEFAULT_SAVED_VOCAB_NAME = "vocabulary.json"
 DEFAULT_PLOT_NAME = "loss_curve"
 DEFAULT_SAVED_METRIC_NAME = "metrics.json"
 DEFAULT_CONFUSION_MATRIX_NAME = "confusion_matrix"
+DEFAULT_BLEU_NAME = "bleu.json"
+DEFAULT_ROUGE_NAME = "rouge.json"
 
 # MODEL SETTINGS
 DEFAULT_INPUT_SIZE = 128    # size of feature vector
@@ -42,6 +46,8 @@ def train_rnn(model: LungRNN,
               save_name: str = DEFAULT_SAVED_MODEL_NAME,
               vocab_name: str = DEFAULT_SAVED_VOCAB_NAME,
               loss_plot_name: str = DEFAULT_PLOT_NAME,
+              bleu_name: str = DEFAULT_BLEU_NAME,
+              rouge_name: str = DEFAULT_ROUGE_NAME,
               ):
 
     # load dataset
@@ -94,6 +100,13 @@ def train_rnn(model: LungRNN,
     plot_loss(training_losses, testing_losses,
               save_to=target_dir/loss_plot_name,
               show_plot=True)
+
+    # bleu and rouge
+    bleu_dict = bleu(model, test_loader)
+    rouge_dict = rouge(model, test_loader)
+    # save bleu and rouge dict
+    save_to_json(bleu_dict, target_dir/bleu_name)
+    save_to_json(rouge_dict, target_dir/rouge_name)
 
 
 if __name__ == '__main__':
