@@ -56,10 +56,10 @@ def train_rnn(model: LungRNN,
 
     # subsampling
     # comment this out later to use the entire dataset
-    sub_lung_caption_dataset, _ = torch.utils.data.random_split(lung_caption_dataset, [0.1, 0.9])
+    sub_lung_caption_dataset, _ = torch.utils.data.random_split(lung_caption_dataset, [0.2, 0.8])
 
     # train-test split
-    train_dataset, test_dataset = torch.utils.data.random_split(sub_lung_caption_dataset, [0.8, 0.2])
+    train_dataset, validate_dataset, test_dataset = torch.utils.data.random_split(sub_lung_caption_dataset, [0.7, 0.1, 0.2])
 
     # send to loader
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
@@ -67,7 +67,7 @@ def train_rnn(model: LungRNN,
                                                shuffle=True,
                                                collate_fn=lung_caption_dataset.collate_fn)
 
-    test_loader = torch.utils.data.DataLoader(dataset=test_dataset,
+    validate_loader = torch.utils.data.DataLoader(dataset=validate_dataset,
                                               batch_size=batch_size,
                                               shuffle=False,
                                               collate_fn=lung_caption_dataset.collate_fn)
@@ -81,11 +81,11 @@ def train_rnn(model: LungRNN,
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     # train
-    training_losses, testing_losses = rnn_train_model(model=model,
+    training_losses, validating_losses = rnn_train_model(model=model,
                                                       optimizer=optimizer,
                                                       loss_fn=loss,
                                                       train_dataloader=train_loader,
-                                                      test_dataloader=test_loader,
+                                                      test_dataloader=validate_loader,
                                                       epochs=epoch)
 
 
@@ -97,15 +97,19 @@ def train_rnn(model: LungRNN,
                                vocab_dir=target_dir/vocab_name)
 
     # loss
-    plot_loss(training_losses, testing_losses,
+    plot_loss(training_losses, validating_losses,
               save_to=target_dir/loss_plot_name,
               show_plot=True)
 
+    test_loader = torch.utils.data.DataLoader(dataset=test_dataset,
+                                                  batch_size=batch_size,
+                                                  shuffle=False,
+                                                  collate_fn=lung_caption_dataset.collate_fn)
+
     # bleu and rouge
     bleu_dict = bleu(model, test_loader)
+    save_to_json(bleu_dict, target_dir / bleu_name)
     rouge_dict = rouge(model, test_loader)
-    # save bleu and rouge dict
-    save_to_json(bleu_dict, target_dir/bleu_name)
     save_to_json(rouge_dict, target_dir/rouge_name)
 
 
