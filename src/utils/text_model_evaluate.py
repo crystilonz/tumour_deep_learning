@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torchmetrics
 from models.interface.LungRNN import LungRNN
+from tqdm.auto import tqdm
 
 
 def join_token_list(tok_lst):
@@ -28,9 +29,10 @@ def bleu(model: LungRNN,
     bleu_4_scores = []
     bleu_avg_scores = []
 
+    print('Running BLEU metrics\n')
     model.eval()
     with torch.no_grad():
-        for feature_vector, target_caption in dataloader:
+        for feature_vector, target_caption in tqdm(dataloader):
             number_of_features = feature_vector.shape[0]
             for idx in range(number_of_features):
                 feature_z = feature_vector[idx, :]
@@ -42,11 +44,11 @@ def bleu(model: LungRNN,
                 target_tok_list = model.vocab.itos_list(target_i, show_pad=False)
                 target_sentence = join_token_list(target_tok_list)
 
-                bleu_1_score = bleu1(pred_sentence, [target_sentence])
-                bleu_2_score = bleu2(pred_sentence, [target_sentence])
-                bleu_3_score = bleu3(pred_sentence, [target_sentence])
-                bleu_4_score = bleu4(pred_sentence, [target_sentence])
-                bleu_avg_score = bleu_avg(pred_sentence, [target_sentence])
+                bleu_1_score = bleu1([pred_sentence], [[target_sentence]]).item()
+                bleu_2_score = bleu2([pred_sentence], [[target_sentence]]).item()
+                bleu_3_score = bleu3([pred_sentence], [[target_sentence]]).item()
+                bleu_4_score = bleu4([pred_sentence], [[target_sentence]]).item()
+                bleu_avg_score = bleu_avg([pred_sentence], [[target_sentence]]).item()
 
                 bleu_1_scores.append(bleu_1_score)
                 bleu_2_scores.append(bleu_2_score)
@@ -87,7 +89,8 @@ def rouge(model: LungRNN,
           dataloader: torch.utils.data.DataLoader,
           max_length: int = 50) -> dict:
 
-    rouge_metric = torchmetrics.text.rouge.ROUGEScore()
+    # rouge_metric = torchmetrics.text.rouge.ROUGEScore(rouge_keys=('rouge1', 'rouge2', 'rougeL'))
+    rouge_metric = lambda pred, target: torchmetrics.functional.text.rouge.rouge_score(pred, target, rouge_keys=('rouge1', 'rouge2', 'rougeL'))
 
     rouge_dict = {
         'rouge1_fscore_list': [],
@@ -98,15 +101,12 @@ def rouge(model: LungRNN,
         'rouge2_recall_list': [],
         'rougeL_fscore_list': [],
         'rougeL_precision_list': [],
-        'rougeL_recall_list': [],
-        'rougeLsum_fscore_list': [],
-        'rougeLsum_precision_list': [],
-        'rougeLsum_recall_list': [],
+        'rougeL_recall_list': []
     }
-
+    print('Running ROUGE metrics.\n')
     model.eval()
     with torch.no_grad():
-        for feature_vector, target_caption in dataloader:
+        for feature_vector, target_caption in tqdm(dataloader):
             number_of_features = feature_vector.shape[0]
             for idx in range(number_of_features):
                 feature_z = feature_vector[idx, :]
@@ -129,9 +129,6 @@ def rouge(model: LungRNN,
                 rouge_dict['rougeL_fscore_list'].append(rouge_eval['rougeL_fmeasure'].item())
                 rouge_dict['rougeL_precision_list'].append(rouge_eval['rougeL_precision'].item())
                 rouge_dict['rougeL_recall_list'].append(rouge_eval['rougeL_recall'].item())
-                rouge_dict['rougeLsum_fscore_list'].append(rouge_eval['rougeLsum_fmeasure'].item())
-                rouge_dict['rougeLsum_precision_list'].append(rouge_eval['rougeLsum_precision'].item())
-                rouge_dict['rougeLsum_recall_list'].append(rouge_eval['rougeLsum_recall'].item())
 
     rouge_results = dict()
     rouge_results['rouge1_fscore_mean'] = np.mean(rouge_dict['rouge1_fscore_list']).item()
@@ -143,9 +140,6 @@ def rouge(model: LungRNN,
     rouge_results['rougeL_fscore_mean'] = np.mean(rouge_dict['rougeL_fscore_list']).item()
     rouge_results['rougeL_precision_mean'] = np.mean(rouge_dict['rougeL_precision_list']).item()
     rouge_results['rougeL_recall_mean'] = np.mean(rouge_dict['rougeL_recall_list']).item()
-    rouge_results['rougeLsum_fscore_mean'] = np.mean(rouge_dict['rougeLsum_fscore_list']).item()
-    rouge_results['rougeLsum_precision_mean'] = np.mean(rouge_dict['rougeLsum_precision_list']).item()
-    rouge_results['rougeLsum_recall_mean'] = np.mean(rouge_dict['rougeLsum_recall_list']).item()
 
     rouge_results['rouge1_fscore_sd'] = np.std(rouge_dict['rouge1_fscore_list']).item()
     rouge_results['rouge1_precision_sd'] = np.std(rouge_dict['rouge1_precision_list']).item()
@@ -156,8 +150,5 @@ def rouge(model: LungRNN,
     rouge_results['rougeL_fscore_sd'] = np.std(rouge_dict['rougeL_fscore_list']).item()
     rouge_results['rougeL_precision_sd'] = np.std(rouge_dict['rougeL_precision_list']).item()
     rouge_results['rougeL_recall_sd'] = np.std(rouge_dict['rougeL_recall_list']).item()
-    rouge_results['rougeLsum_fscore_sd'] = np.std(rouge_dict['rougeLsum_fscore_list']).item()
-    rouge_results['rougeLsum_precision_sd'] = np.std(rouge_dict['rougeLsum_precision_list']).item()
-    rouge_results['rougeLsum_recall_sd'] = np.std(rouge_dict['rougeLsum_recall_list']).item()
 
     return rouge_results
