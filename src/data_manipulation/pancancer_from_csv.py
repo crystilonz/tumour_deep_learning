@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import numpy as np
+import glob
 
 PAN_CANCER_DICT = {0: "BLCA",
                    1: "BRCA",
@@ -17,7 +18,7 @@ PAN_CANCER_LABELS: list[str] = [PAN_CANCER_DICT[i] for i in range(0, 10)]
 
 
 def get_pancancer_data_from_csv(dir_path: str):
-    file_list = os.listdir(dir_path)
+    file_list = glob.glob(pathname='*.csv', root_dir=dir_path)
     sample_list, slide_list, WSI_tensor, WSI_label = None, None, None, None
 
 

@@ -131,6 +131,7 @@ def rnn_training_step(model: LungRNN,
     # total loss accumulation
     total_loss = 0
     model.to(device)
+    loss_fn.to(device)
     model.train()
 
     for feature, caption in dataloader:
@@ -165,6 +166,7 @@ def rnn_testing_step(model: LungRNN,
     total_loss = 0
 
     model.to(device)
+    loss_fn.to(device)
     model.eval()
 
     with torch.inference_mode():
@@ -188,18 +190,18 @@ def rnn_train_model(model: LungRNN,
                     train_dataloader: DataLoader,
                     test_dataloader: DataLoader,
                     epochs: int,
-                    device: torch.device = None) -> ([float], [float]):
+                    device: torch.device) -> ([float], [float]):
     training_losses = []
     testing_losses = []
     ten_epochs = 0
 
     # taking a sample from test data_loader
     train_show_feature, train_show_caption = next(iter(train_dataloader))
-    train_show_feature = train_show_feature[0]
-    train_show_caption = train_show_caption[0]
+    train_show_feature = train_show_feature[0].cpu()
+    train_show_caption = train_show_caption[0].cpu()
     test_show_feature, test_show_caption = next(iter(test_dataloader))
-    test_show_feature = test_show_feature[0]
-    test_show_caption = test_show_caption[0]
+    test_show_feature = test_show_feature[0].cpu()
+    test_show_caption = test_show_caption[0].cpu()
 
     print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
     print(f"Training model: {model.__class__.__name__} for {epochs} epochs.")

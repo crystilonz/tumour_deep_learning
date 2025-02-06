@@ -10,6 +10,7 @@ from models.interface.LungRNN import LungRNN
 from models.LSTM import LSTM
 from utils.text_model_evaluate import bleu, rouge
 from utils.datadump import save_to_json
+from typing import Literal
 
 DEFAULT_DATA_FILE_PATH = Path(__file__).parent / "datasets" / "lung_text" / "TCGA_Lung_consensus.csv"
 DEFAULT_VOCAB_FILE_PATH = Path(__file__).parent / "datasets" / "lung_text" / "vocab.json"
@@ -48,7 +49,12 @@ def train_rnn(model: LungRNN,
               loss_plot_name: str = DEFAULT_PLOT_NAME,
               bleu_name: str = DEFAULT_BLEU_NAME,
               rouge_name: str = DEFAULT_ROUGE_NAME,
-              ):
+              device:Literal["cuda", "cpu"] | None = None):
+
+    if device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    else:
+        device = torch.device(device)
 
     # load dataset
     lung_caption_dataset = LungCaptionDataset.new_from_csv(csv_path = datadir,
@@ -86,7 +92,8 @@ def train_rnn(model: LungRNN,
                                                       loss_fn=loss,
                                                       train_dataloader=train_loader,
                                                       test_dataloader=validate_loader,
-                                                      epochs=epoch)
+                                                      epochs=epoch,
+                                                      device=device)
 
 
     # save model
