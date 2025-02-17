@@ -119,6 +119,49 @@ def plot_confusion_matrix(cm: np.ndarray | torch.Tensor,
 
     plt.close()
 
+def plot_imbalanced_confusion_matrix(cm: np.ndarray | torch.Tensor,
+                                     save_to: str | Path = None,
+                                     row_index: List[Any] = None,
+                                     column_index: List[Any] = None,
+                                     row_label: str = 'True label',
+                                     column_label: str = 'Predicted label',
+                                     row_to_delete: int | tuple[int] = None,
+                                     column_to_delete: int | tuple[int] = None,
+                                     plot_title: str = 'Confusion Matrix',
+                                     show_plot: bool = True) -> None:
+    if isinstance(cm, torch.Tensor):
+        cm = cm.cpu().numpy()
+
+    # delete rows
+    if row_to_delete is not None:
+        cm = np.delete(cm, row_to_delete, axis=0)
+
+    # delete columns
+    if column_to_delete is not None:
+        cm = np.delete(cm, column_to_delete, axis=1)
+
+    if row_index is None:
+        row_index = range(cm.shape[0])
+
+    if column_index is None:
+        column_index = range(cm.shape[1])
+
+    df_cm = pd.DataFrame(cm, index=row_index, columns=column_index)
+    plt.figure(figsize=(8, 8))
+    sn.heatmap(df_cm, annot=True)
+    plt.title(plot_title)
+    plt.xlabel(column_label)
+    plt.ylabel(row_label)
+
+    if save_to is not None:
+        plt.savefig(save_to)
+
+    if show_plot and ENV_SHOW_PLOT:
+        plt.show()
+
+    plt.close()
+
+
 
 def plot_shap_beeswarm_bar(m: torch.nn.Module,
                            data: torch.Tensor,

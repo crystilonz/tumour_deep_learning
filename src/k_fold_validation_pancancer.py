@@ -287,7 +287,8 @@ def k_fold_validation_pancancer(
              auroc_by_class=best_metrics['class_auroc'],
              auroc=best_metrics['auroc'],
              title="ROC of best model",
-             save_to=save_dir / best_roc_plot_save_name)
+             save_to=save_dir / best_roc_plot_save_name,
+             label_dict=PAN_CANCER_DICT)
 
     plot_confusion_matrix(best_metrics['confusion_matrix'],
                           save_to=save_dir / best_conf_mat_save_name,

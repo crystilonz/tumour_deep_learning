@@ -90,7 +90,7 @@ def rouge(model: LungRNN,
           max_length: int = 50) -> dict:
 
     # rouge_metric = torchmetrics.text.rouge.ROUGEScore(rouge_keys=('rouge1', 'rouge2', 'rougeL'))
-    rouge_metric = lambda pred, target: torchmetrics.functional.text.rouge.rouge_score(pred, target, rouge_keys=('rouge1', 'rouge2', 'rougeL'))
+    rouge_metric = lambda pred, target: torchmetrics.functional.text.rouge.rouge_score(pred, target, rouge_keys=('rouge1', 'rouge2', 'rougeL'), normalizer=lambda x: x)
 
     rouge_dict = {
         'rouge1_fscore_list': [],

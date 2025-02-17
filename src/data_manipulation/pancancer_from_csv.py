@@ -14,7 +14,18 @@ PAN_CANCER_DICT = {0: "BLCA",
                    8: "STAD",
                    9: "UCEC"}
 
+GTEX_DICT = {0: "Bladder",
+             1: "Breast",
+             2: "Cervix",
+             3: "Colon",
+             4: "Lung",
+             5: "Prostate",
+             6: "Skin",
+             7: "Stomach",
+             8: "Uterus"}
+
 PAN_CANCER_LABELS: list[str] = [PAN_CANCER_DICT[i] for i in range(0, 10)]
+GTEX_LABELS: list[str] = [GTEX_DICT[i] for i in range(0, 9)]
 
 
 def get_pancancer_data_from_csv(dir_path: str):

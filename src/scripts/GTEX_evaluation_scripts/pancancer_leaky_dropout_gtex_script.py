@@ -11,4 +11,5 @@ if __name__ == '__main__':
                                num_classes=GTEX_details.num_classes,
                                checkpoint='/Users/muang/PycharmProjects/tumour_deep_learning/src/validation_models/leaky_pancancer_dropout/leaky_pancancer_dropout_checkpoints.pt',
                                external_csv=GTEX_details.ext_directory,
-                               output_dir=GTEX_details.output_directory)
+                               output_dir=GTEX_details.output_directory,
+                               confusion_mode='gtex')

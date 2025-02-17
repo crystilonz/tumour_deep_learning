@@ -3,9 +3,12 @@ import torch.nn as nn
 from pathlib import Path
 from utils.multiclass_evaluate import evaluate_multiclass_classifier
 from utils.datadump import save_to_json
-from data_manipulation.pancancer_from_csv import get_pancancer_data_from_csv, PAN_CANCER_LABELS, PAN_CANCER_DICT
-from utils.plotting import plot_roc, plot_confusion_matrix, per_class_auroc_plot, per_class_acc_barplot, plot_shap_all
+from data_manipulation.pancancer_from_csv import get_pancancer_data_from_csv, PAN_CANCER_LABELS, PAN_CANCER_DICT, \
+    GTEX_LABELS
+from utils.plotting import plot_roc, plot_confusion_matrix, per_class_auroc_plot, per_class_acc_barplot, plot_shap_all, \
+    plot_imbalanced_confusion_matrix
 import numpy as np
+from typing import Literal
 
 DEFAULT_DIRECTORY = Path(__file__).parent.parent / 'external_validation_results'
 DEFAULT_EXT_DIRECTORY = Path(__file__).parent.parent / 'datasets' / 'external_pancancer'
@@ -22,7 +25,8 @@ def validate_with_external_set(model: nn.Module,
                                checkpoint: Path | str,
                                external_csv: Path | str = DEFAULT_EXT_DIRECTORY,
                                output_dir: Path | str = None,
-                               num_classes: int = None) -> dict:
+                               num_classes: int = None,
+                               confusion_mode: Literal['normal', 'gtex'] = 'normal') -> dict:
     # where to save the results
     if output_dir is None:
         output_dir = DEFAULT_DIRECTORY / model.__class__.__name__
@@ -78,9 +82,24 @@ def validate_with_external_set(model: nn.Module,
              label_dict=PAN_CANCER_DICT)
 
     cm = results['confusion_matrix']
-    plot_confusion_matrix(cm,
-                          save_to=output_dir / CONFUSION_MATRIX_FILE_NAME,
-                          indices=PAN_CANCER_LABELS)
+    if confusion_mode == 'normal':
+        plot_confusion_matrix(cm,
+                              save_to=output_dir / CONFUSION_MATRIX_FILE_NAME,
+                              indices=PAN_CANCER_LABELS)
+    elif confusion_mode == 'gtex':
+        plot_imbalanced_confusion_matrix(cm,
+                                         save_to=output_dir / CONFUSION_MATRIX_FILE_NAME,
+                                         column_index=PAN_CANCER_LABELS,
+                                         row_index=GTEX_LABELS,
+                                         row_label='Source',
+                                         row_to_delete= 5,
+                                         plot_title='GTEx Confusion Matrix'
+                                         )
+    else:
+        plot_confusion_matrix(cm,
+                              save_to=output_dir / CONFUSION_MATRIX_FILE_NAME,
+                              indices=PAN_CANCER_LABELS)
+
 
     per_class_auroc_plot(results['class_auroc'], class_list=PAN_CANCER_LABELS,
                          save_to=output_dir / CLASS_AUROC_FILE_NAME)
