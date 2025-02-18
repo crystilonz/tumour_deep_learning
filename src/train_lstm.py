@@ -8,7 +8,6 @@ from pathlib import Path
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 
-from data_manipulation import lung_caption_dataset
 from data_manipulation.lung_caption_dataset import LungCaptionDataset
 from data_manipulation.lung_caption_vocab import Vocabulary
 from utils.plotting import plot_loss
@@ -18,17 +17,6 @@ from models.LSTM import LSTM
 from utils.text_model_evaluate import bleu, rouge
 from utils.datadump import save_to_json
 from typing import Literal
-
-import os
-import argparse
-import numpy as np
-import torch.distributed as dist
-import torch.multiprocessing as mp
-from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.data.distributed import DistributedSampler
-from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
-from torch.distributed.fsdp.fully_sharded_data_parallel import CPUOffload, BackwardPrefetch
-from torch.distributed.fsdp.wrap import size_based_auto_wrap_policy, enable_wrap, wrap
 
 DEFAULT_DATA_FILE_PATH = Path(__file__).parent / "datasets" / "lung_text" / "TCGA_Lung_consensus.csv"
 DEFAULT_VOCAB_FILE_PATH = Path(__file__).parent / "datasets" / "lung_text" / "vocab.json"
@@ -136,114 +124,6 @@ def train_rnn(model: LungRNN,
     save_to_json(bleu_dict, target_dir / bleu_name)
     rouge_dict = rouge(model, test_loader)
     save_to_json(rouge_dict, target_dir/rouge_name)
-
-
-def setup(rank, world_size):
-    os.environ['MASTER_ADDR'] = 'localhost'
-    os.environ['MASTER_PORT'] = '8888'
-    dist.init_process_group(backend='nccl',
-                            rank=rank,
-                            world_size=world_size)
-
-
-def cleanup():
-    dist.destroy_process_group()
-
-
-def distributed_train_rnn(rank, world_size, args):
-
-    # # dataset args
-    # dataset_kwargs = {'data_dir': args.data_dir,
-    #                   'vocab_dir': args.vocab_dir,
-    #                   }
-    #
-    # # model args
-    # model_kwargs = {'model': args.models,
-    #                 }
-    #
-    # # args for training
-    # training_kwargs = {'batch_size': args.batch_size,
-    #                    }
-    #
-    # # args for validating
-    # validation_kwargs = {'batch_size': args.validate_batch_size,
-    #                      }
-    #
-    # # args for distributed training
-    # cuda_kwargs = {'num_workers': args.num_workers,
-    #                'pin_memory': args.pin_memory,
-    #                'shuffle': args.shuffle}
-    #
-    # # args for saving
-    # saving_kwargs = {'save_dir': args.save_dir,}
-
-    lung_dataset = LungCaptionDataset.new_from_csv(csv_path = args.data_dir,
-                                                   vocab_path = args.vocab_dir,)
-
-    if not (0 <= args.subsample <= 1):
-        raise ValueError("subsample must be between 0 and 1")
-
-    if not (0 <= args.train_size <= 1) or not (0 <= args.test_size <= 1):
-        raise ValueError("train_size and test_size must be between 0 and 1")
-
-    if not (args.train_size + args.test_size <= 1):
-        raise ValueError("train_size + test_size must not be over 1.0")
-
-    if np.isclose(args.subsample, 1.0):
-        training_dataset, validating_dataset, testing_dataset = torch.utils.data.random_split(lung_dataset,
-                                                                                              [args.train_size,
-                                                                                               1 - (args.train_size + args.test_size),
-                                                                                               args.test_size])
-    else:
-        subsample_dataset, _ = torch.utils.data.random_split(lung_dataset, [args.subsample, 1 - args.subsample])
-        training_dataset, validating_dataset, testing_dataset = torch.utils.data.random_split(subsample_dataset,
-                                                                                              [args.train_size,
-                                                                                               1 - (args.train_size + args.test_size),
-                                                                                               args.test_size])
-
-    training_sampler = DistributedSampler(training_dataset, rank=rank, num_replicas=world_size, shuffle=True)
-    validating_sampler = DistributedSampler(validating_dataset, rank=rank, num_replicas=world_size)
-    testing_sampler = DistributedSampler(testing_dataset, rank=rank, num_replicas=world_size)
-
-    train_kwargs = {'batch_size': args.train_batch_size, 'sampler': training_sampler,}
-    valid_kwargs = {'batch_size': args.validate_batch_size, 'sampler': validating_sampler,}
-    test_kwargs = {'batch_size': args.test_batch_size, 'sampler': testing_sampler,}
-
-    cuda_kwargs = {'num_workers': args.num_workers, 'pin_memory': True}
-    train_kwargs.update(cuda_kwargs)
-    valid_kwargs.update(cuda_kwargs)
-    test_kwargs.update(cuda_kwargs)
-
-    train_loader = DataLoader(dataset=training_dataset,
-                              shuffle=True,
-                              collate_fn=lung_dataset.collate_fn,
-                              **train_kwargs)
-    validate_loader = DataLoader(dataset=validating_dataset,
-                                 shuffle=False,
-                                 collate_fn=lung_dataset.collate_fn,
-                                 **valid_kwargs)
-    test_loader = DataLoader(dataset=testing_dataset,
-                             shuffle=False,
-                             collate_fn=lung_dataset.collate_fn,
-                             **test_kwargs)
-    auto_wrap_policy = functools.partial(size_based_auto_wrap_policy, min_num_params=100)
-    torch.cuda.set_device(rank)
-
-    init_start_event = torch.cude.Event(enable_timing=True)
-    init_end_event = torch.cuda.Event(enable_timing=True)
-
-    vocab = Vocabulary()
-    vocab.load(args.vocab_dir)
-
-    model = LSTM(input_size=args.input_size,
-                 embed_size=args.embed_size,
-                 hidden_size=args.hidden_size,
-                 vocab=vocab,
-                 num_layers=args.num_layers,).to(rank)
-    model = FSDP(model)
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
-
-    scheduler = StepLR(optimizer, step_size=1, gamma=0.1)
 
 
 
