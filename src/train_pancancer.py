@@ -130,11 +130,11 @@ def train_pan_cancer(pan_cancer_model: nn.Module,
     # report metrics
     print("------------------------------------")
     print(f"Training Dataset")
-    print(f"Accuracy: {training_evaluate_metrics["micro_top1_acc"] * 100 :.2f}({final_train_acc * 100:.2f})%")
+    print(f"Accuracy: {training_evaluate_metrics['micro_top1_acc'] * 100 :.2f}({final_train_acc * 100:.2f})%")
     print(f"AUROC: {final_train_area:.5f}")
     print("------------------------------------")
     print(f"Testing Dataset")
-    print(f"Accuracy: {testing_evaluate_metrics["micro_top1_acc"] * 100 :.2f}({final_test_acc * 100:.2f})%")
+    print(f"Accuracy: {testing_evaluate_metrics['micro_top1_acc'] * 100 :.2f}({final_test_acc * 100:.2f})%")
     print(f"Average AUROC: {final_test_area:.5f}")
     print(f"Recall: {rc:.5f}")
     print(f"Precision: {prec:.5f}")

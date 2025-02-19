@@ -1,11 +1,13 @@
 import pickle
 import torch
 import numpy as np
+import random
 from pathlib import Path
 from data_manipulation.lung_caption_vocab import Vocabulary
 from data_manipulation.lung_caption_dataset import LungCaptionDataset
 
 DEFAULT_NAME = 'splits.pkl'
+SEED = 5
 
 def split_lung_caption(csv_source: str | Path,
                        vocab_path: str | Path,
@@ -15,6 +17,10 @@ def split_lung_caption(csv_source: str | Path,
     vocab_path = Path(vocab_path)
     lung_caption_dataset = LungCaptionDataset.new_from_csv(csv_path=csv_source,
                                                            vocab_path=vocab_path)
+    
+    random.seed(SEED)
+    torch.manual_seed(SEED)
+    np.random.seed(SEED)
 
     # split
     train_dataset, validate_dataset, test_dataset = torch.utils.data.random_split(lung_caption_dataset,
@@ -39,6 +45,12 @@ def split_lung_caption(csv_source: str | Path,
 
 
 if __name__ == '__main__':
-    split_lung_caption(csv_source='/Users/muang/PycharmProjects/tumour_deep_learning/src/datasets/lung_text/TCGA_Lung_consensus.csv',
-                       vocab_path='/Users/muang/PycharmProjects/tumour_deep_learning/src/datasets/lung_text/vocab.json',
-                       splits=[0.7, 0.1, 0.2])
+    split_lung_caption(csv_source='/home/dp289/dp289/dc-siha1/project/tumour_deep_learning/src/datasets/lung_text/TCGA_Lung_consensus.csv',
+                       vocab_path='/home/dp289/dp289/dc-siha1/project/tumour_deep_learning/src/datasets/lung_text/vocab.json',
+                       splits=[0.7, 0.1, 0.2],
+                       save_to='/home/dp289/dp289/dc-siha1/project/tumour_deep_learning/src/datasets/lung_text/z_vec.pkl')
+    split_lung_caption(csv_source='/home/dp289/dp289/dc-siha1/project/tumour_deep_learning/src/datasets/lung_text/TCGA_Lung_consensus_h_vec.csv',
+                       vocab_path='/home/dp289/dp289/dc-siha1/project/tumour_deep_learning/src/datasets/lung_text/vocab.json',
+                       splits=[0.7, 0.1, 0.2],
+                       save_to='/home/dp289/dp289/dc-siha1/project/tumour_deep_learning/src/datasets/lung_text/h_vec.pkl')
+    

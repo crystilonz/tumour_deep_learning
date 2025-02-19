@@ -26,13 +26,26 @@ from torch.distributed.fsdp.wrap import size_based_auto_wrap_policy, enable_wrap
 
 from utils.plotting import plot_loss
 
+def find_free_port() -> str:
+    import socket
+    from contextlib import closing
+    
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+        s.bind(('', 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return str(s.getsockname()[1])
 
 def setup(rank, world_size):
     os.environ['MASTER_ADDR'] = 'localhost'
-    os.environ['MASTER_PORT'] = '8888'
+    p = '42719'
+    os.environ['MASTER_PORT'] = p
     dist.init_process_group(backend='nccl',
                             rank=rank,
                             world_size=world_size)
+    
+    print(f'Setup on: localhost:{p}')
+    print(f'Rank: {rank}')
+    print(f'World Size: {world_size}')
 
 
 def cleanup():
@@ -128,7 +141,10 @@ def train_rnn_distributed(rank, world_size, args):
     #
     # # args for saving
     # saving_kwargs = {'save_dir': args.save_dir,}
-
+    print('Training')
+    setup(rank, world_size)
+    
+    
     with open(args.pkl, 'rb') as fp:
         split_dict = pickle.load(fp)
 
@@ -151,11 +167,10 @@ def train_rnn_distributed(rank, world_size, args):
     # test_kwargs.update(cuda_kwargs)
 
     train_loader = DataLoader(dataset=training_dataset,
-                              shuffle=True,
+
                               collate_fn=collate_fn,
                               **train_kwargs)
     validate_loader = DataLoader(dataset=validating_dataset,
-                                 shuffle=False,
                                  collate_fn=collate_fn,
                                  **valid_kwargs)
     auto_wrap_policy = functools.partial(size_based_auto_wrap_policy, min_num_params=100)
@@ -182,6 +197,8 @@ def train_rnn_distributed(rank, world_size, args):
     validating_loss = []
 
     for epoch in range(0, args.epochs):
+        print('=' * 100)
+        print(f'Epoch: {epoch}')
         t_loss = rnn_distributed_train_step(model=model,
                                             rank=rank,
                                             world_size=world_size,

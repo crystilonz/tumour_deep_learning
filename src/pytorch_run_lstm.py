@@ -1,7 +1,6 @@
 import argparse
 import torch
-
-from utils.parallel_training import train_rnn_distributed
+from utils.pytorch_run_FSDP import *
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -42,11 +41,4 @@ if __name__ == '__main__':
                         metavar='path/to/save/directory', help='where to save the results')
 
     args = parser.parse_args()
-
-    WORLD_SIZE = torch.cuda.device_count()
-    # WORLD_SIZE = args.world_size
-    print(f'Using GPU: {torch.cuda.is_available()}')
-    torch.multiprocessing.spawn(train_rnn_distributed,
-                                args=(WORLD_SIZE, args),
-                                nprocs=WORLD_SIZE,
-                                join=True)
+    fsdp_main(args)
