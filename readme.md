@@ -41,7 +41,7 @@ tumour_deep_learning/
 Most of the codes are related to the [DeepPATH](https://github.com/ncoudray/DeepPATH) framework 
 used to tile whole slide images, or the [Histomorphological Phenotype Learning (HPL)](https://github.com/AdalbertoCq/Histomorphological-Phenotype-Learning/tree/master)
 methodology.
-* `./dissertation` contains the original $\LaTeX$ dissertation file along with
+* `./dissertation` contains the original LaTeX dissertation file along with
 the figures and other accompanying files.
 * `./presentation` contains files related to the video presentation.
 * `./research` contains some research notes from reading other publications.
