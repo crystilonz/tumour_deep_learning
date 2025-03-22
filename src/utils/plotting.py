@@ -420,3 +420,61 @@ def per_class_auroc_plot(auroc: torch.Tensor,
     plt.close()
 
 
+def per_class_f1_plot(f1_score: torch.Tensor,
+                      class_list: list[str],
+                      save_to: str | Path = None,
+                      show_plot: bool = True) -> None:
+    plt.figure(figsize=(14, 7))
+    f1_score = f1_score.cpu().numpy()
+
+    sn.barplot(x=class_list, y=f1_score, color='g')
+    plt.title('Per-class F1 Score')
+
+    if save_to is not None:
+        plt.savefig(save_to)
+
+    if show_plot and ENV_SHOW_PLOT:
+        plt.show()
+
+    plt.close()
+
+def datasets_f1_plot(f1_score_cv,
+                     f1_score_ext,
+                     f1_score_gtex,
+                     class_list: list[str],
+                     save_to: str | Path = None,
+                     show_plot: bool = True) -> None:
+    plt.figure(figsize=(14, 7))
+
+    classes = []
+    dataset = []
+    f1_scores = []
+
+    for num, cls in enumerate(class_list):
+        classes.append(cls)
+        dataset.append("TCGA")
+        f1_scores.append(f1_score_cv[num])
+
+        classes.append(cls)
+        dataset.append("External")
+        f1_scores.append(f1_score_ext[num])
+
+        classes.append(cls)
+        dataset.append("GTEx")
+        f1_scores.append(f1_score_gtex[num])
+
+    plt_dict = {'Class': classes,
+                'F1 Score': f1_scores,
+                'Dataset': dataset}
+
+    plt_df = pd.DataFrame(plt_dict)
+
+    sn.barplot(data=plt_df, x="Class", y="F1 Score", hue="Dataset", palette='viridis')
+    plt.title('Per-class F1 Score Between Datasets')
+    if save_to is not None:
+        plt.savefig(save_to)
+
+    if show_plot and ENV_SHOW_PLOT:
+        plt.show()
+
+    plt.close()

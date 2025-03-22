@@ -1,9 +1,20 @@
+import pickle
+
 import numpy as np
 import torch
 import torchmetrics
 from models.interface.LungRNN import LungRNN
+from models.LSTM import LSTM
 from tqdm.auto import tqdm
+from pathlib import Path
+from data_manipulation.lung_caption_vocab import Vocabulary
+from utils.datadump import save_to_json
 
+DEFAULT_PICKLE_PATH = Path(__file__).parent.parent / 'datasets/lung_text/z_vec.pkl'
+DEFAULT_VOCAB_PATH = Path(__file__).parent.parent / 'datasets/lung_text/vocab.json'
+DEFAULT_MODEL_PATH = Path(__file__).parent.parent / 'dist_models/LSTM_z_vec/model.pt'
+DEFAULT_BLEU_NAME = "bleu.json"
+DEFAULT_ROUGE_NAME = "rouge.json"
 
 def join_token_list(tok_lst):
     # this is to make joining consistent across this library
@@ -152,3 +163,65 @@ def rouge(model: LungRNN,
     rouge_results['rougeL_recall_sd'] = np.std(rouge_dict['rougeL_recall_list']).item()
 
     return rouge_results
+
+def pickle_test_lstm(input_size: int = 128,
+                     embed_size: int = 128,
+                     hidden_size: int = 128,
+                     num_layers: int = 1,
+                     vocab_path: str|Path = DEFAULT_VOCAB_PATH,
+                     pickle_path: str|Path = DEFAULT_PICKLE_PATH,
+                     model_path: str|Path = DEFAULT_MODEL_PATH,
+                     results_dir: str|Path = None,
+                     bleu_name: str = DEFAULT_BLEU_NAME,
+                     rouge_name: str = DEFAULT_ROUGE_NAME
+                     ):
+    with open(pickle_path, 'rb') as f:
+        split_dict = pickle.load(f)
+
+    if results_dir is None:
+        results_dir = Path(model_path).parent
+
+    test_dataset = split_dict['testing_dataset']
+    collate_fn = split_dict['collate_fn']
+
+    test_loader = torch.utils.data.DataLoader(test_dataset,
+                                              batch_size=1,
+                                              shuffle=False,
+                                              collate_fn=collate_fn)
+
+    # build model
+    vocab = Vocabulary()
+    vocab.load(vocab_path)
+    model = LSTM(input_size=input_size,
+                 embed_size=embed_size,
+                 hidden_size=hidden_size,
+                 num_layers=num_layers,
+                 vocab=vocab)
+
+    print("Loading model...")
+    model.load_state_dict(torch.load(model_path, weights_only=True))
+    print("Model loaded.")
+
+    print("Calculating Bleu...")
+    bleu_dict = bleu(model, test_loader)
+    print("Bleu calculated.")
+
+    print("Calculating ROUGE...")
+    rouge_dict = rouge(model, test_loader)
+    print("ROUGE calculated.")
+
+    print(f"BLEU: {bleu_dict['bleu-avg']}")
+    print(f"ROUGE-1: {rouge_dict['rouge1_recall_mean']}")
+    print(f"ROUGE-2: {rouge_dict['rouge2_recall_mean']}")
+    print(f"ROUGE-L: {rouge_dict['rougeL_recall_mean']}")
+
+    print(f"Saving to {results_dir}.")
+    save_to_json(bleu_dict, results_dir / bleu_name)
+    save_to_json(rouge_dict, results_dir / rouge_name)
+
+
+
+
+
+
+

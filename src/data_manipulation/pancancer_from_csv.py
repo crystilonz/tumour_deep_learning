@@ -47,9 +47,11 @@ def get_pancancer_data_from_csv(dir_path: str):
 
 
 if __name__ == '__main__':
-    DATA_DIR = "../datasets/pancancer_WSI_representation"
+    DATA_DIR = "../datasets/gtex_pancancer"
     samples, slides, tensor, labels = get_pancancer_data_from_csv(DATA_DIR)
     for i in range(10):
         print(f"Number of samples in class {PAN_CANCER_DICT[i]}: {np.sum(labels == i)}")
+
+    print(f"Total samples: {len(samples)}")
 
 

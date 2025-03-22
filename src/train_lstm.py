@@ -14,7 +14,7 @@ from utils.plotting import plot_loss
 from utils.training import rnn_train_model
 from models.interface.LungRNN import LungRNN
 from models.LSTM import LSTM
-from utils.text_model_evaluate import bleu, rouge
+from utils.text_model_evaluate import bleu, rouge, DEFAULT_ROUGE_NAME, DEFAULT_BLEU_NAME
 from utils.datadump import save_to_json
 from typing import Literal
 
@@ -27,8 +27,6 @@ DEFAULT_SAVED_VOCAB_NAME = "vocabulary.json"
 DEFAULT_PLOT_NAME = "loss_curve"
 DEFAULT_SAVED_METRIC_NAME = "metrics.json"
 DEFAULT_CONFUSION_MATRIX_NAME = "confusion_matrix"
-DEFAULT_BLEU_NAME = "bleu.json"
-DEFAULT_ROUGE_NAME = "rouge.json"
 
 # MODEL SETTINGS
 DEFAULT_INPUT_SIZE = 128    # size of feature vector

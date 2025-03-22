@@ -47,7 +47,7 @@ class LSTM(LungRNN):
 
         caption = []
         lstm_state = None
-        features.to(self.device)
+        # features.to(self.device)
         features.squeeze()  # just in case
 
         self.eval()

@@ -135,7 +135,7 @@ def rnn_training_step(model: LungRNN,
     loss_fn.to(device)
     model.train()
 
-    for feature, caption in dataloader:
+    for feature, caption in tqdm(dataloader):
         feature, caption = feature.to(device), caption.to(device)
 
         cap_preds = model(feature, caption)
@@ -171,7 +171,7 @@ def rnn_testing_step(model: LungRNN,
     model.eval()
 
     with torch.inference_mode():
-        for feature, caption in dataloader:
+        for feature, caption in tqdm(dataloader):
             feature, caption = feature.to(device), caption.to(device)  # move to device
 
             cap_preds = model(feature, caption)
