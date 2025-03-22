@@ -1,6 +1,6 @@
 # Readme
 
-Put a brief description of your code here. This should at least describe the file structure.
+This repository holds the code relevant to the dissertation
 
 ## Build instructions
 

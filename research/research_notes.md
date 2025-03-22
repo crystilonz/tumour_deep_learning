@@ -1,8 +1,6 @@
 # Research Notes
 This file contains notes from literature reviews, with its references.
 
-## Week 1
-
 ### Mapping the landscape of histomorphological cancer phenotypes using self-supervised learning on unannotated pathology slides
 > https://www.nature.com/articles/s41467-024-48666-7
 
@@ -41,8 +39,6 @@ This file contains notes from literature reviews, with its references.
   - 200,000 randomly sampled tile vectors from training set is turned into a graph by using k-nearest neighbour ($k=250$)
   - Use the graph above to find the clusters using `Leiden Community`
     - Leiden Resolution or $\gamma$ 
-
-## Week 2
 
 ### AI-based pathology predicts origins for cancers of unknown primary
 
