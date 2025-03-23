@@ -83,8 +83,8 @@ Other directories do not include any checkpoints, but are results from evaluatin
 
 ## Reproduction
 
-With the repository as is, partial reproduction is available, such as training the model on the dataset and evaluating them.
+With the repository as is, partial reproduction is possible, such as training a new model on the dataset.
 Further reproduction will require additional data files, some of which are quite bulky. 
 
-Please refer to the user manual for details.
+Please refer to the [user manual](src/manual.md) for details.
 
