@@ -1,3 +1,3 @@
-# gitattributes
+# .gitattributes
 
-*.ipynb -linguist-vendored
+*.ipynb linguist-vendored
