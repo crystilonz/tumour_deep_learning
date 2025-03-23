@@ -1,12 +1,11 @@
-from tarfile import TruncatedHeaderError
-
 from data_manipulation.pancancer_from_csv import PAN_CANCER_LABELS
 import json
 import glob
 from pathlib import Path
 import torch
-from utils.plotting import per_class_f1_plot, datasets_f1_plot
+from utils.plotting import per_class_f1_plot, datasets_f1_plot, per_class_auroc_plot
 import os
+
 
 def plot_per_class_f1_from_metrics(metrics, save_to=None, show_plot=True):
     f1 = []
@@ -17,6 +16,7 @@ def plot_per_class_f1_from_metrics(metrics, save_to=None, show_plot=True):
                       class_list=PAN_CANCER_LABELS,
                       save_to=save_to,
                       show_plot=show_plot)
+
 
 def plot_per_class_f1_from_json(json_path, save_to=None, show_plot=True, save_plot=True):
     with open(json_path, 'r') as f:
@@ -38,17 +38,17 @@ def plot_per_class_f1_from_json(json_path, save_to=None, show_plot=True, save_pl
 
 def plot_per_class_f1_from_dir(root_dir, file_name='metrics.json'):
     file_list = glob.glob('**/' + file_name,
-                          root_dir = root_dir)
+                          root_dir=root_dir)
     for file in file_list:
         file_abs = os.path.join(root_dir, file)
         plot_per_class_f1_from_json(json_path=file_abs,
                                     save_to=None,
-                                    show_plot=True,
+                                    show_plot=False,
                                     save_plot=True)
+
 
 def plot_datasets_f1_from_metrics(cv_metrics, ext_metrics, gtex_metrics,
                                   class_list, save_to=None, show_plot=True):
-
     cv_f1s = []
     ext_f1s = []
     gtex_f1s = []
@@ -60,7 +60,9 @@ def plot_datasets_f1_from_metrics(cv_metrics, ext_metrics, gtex_metrics,
 
     datasets_f1_plot(cv_f1s, ext_f1s, gtex_f1s, class_list, save_to, show_plot)
 
-def plot_datasets_f1_from_json(cv_json, ext_json, gtex_json, class_list=None, save_to=None, show_plot=True, save_plot=True):
+
+def plot_datasets_f1_from_json(cv_json, ext_json, gtex_json, class_list=None, save_to=None, show_plot=True,
+                               save_plot=True):
     with open(cv_json, 'r') as f:
         cv_metrics = json.load(f)
     with open(ext_json, 'r') as f:
@@ -88,11 +90,58 @@ def plot_datasets_f1_from_json(cv_json, ext_json, gtex_json, class_list=None, sa
                                       save_to=None,
                                       show_plot=show_plot)
 
+
+def plot_per_class_auroc_from_metrics(metrics, save_to=None, show_plot=True):
+    auroc = []
+    for c in PAN_CANCER_LABELS:
+        auroc.append(metrics[c]['auroc'])
+    auroc_tensor = torch.tensor(auroc)
+    per_class_auroc_plot(auroc=auroc_tensor,
+                         class_list=PAN_CANCER_LABELS,
+                         save_to=save_to,
+                         show_plot=show_plot)
+
+
+def plot_per_class_auroc_from_json(json_path, save_to=None, show_plot=True, save_plot=True):
+    with open(json_path, 'r') as f:
+        metrics = json.load(f)
+
+    if save_plot:
+        if save_to is None:
+            # resolve
+            json_path = Path(json_path)
+            save_to = json_path.parent / 'per_class_auroc.png'
+        plot_per_class_auroc_from_metrics(metrics=metrics,
+                                       save_to=save_to,
+                                       show_plot=show_plot)
+    else:
+        plot_per_class_auroc_from_metrics(metrics=metrics,
+                                       save_to=None,
+                                       show_plot=show_plot)
+
+
+def plot_per_class_auroc_from_dir(root_dir, file_name='metrics.json'):
+    file_list = glob.glob('**/' + file_name,
+                          root_dir=root_dir)
+    for file in file_list:
+        file_abs = os.path.join(root_dir, file)
+        plot_per_class_auroc_from_json(json_path=file_abs,
+                                    save_to=None,
+                                    show_plot=False,
+                                    save_plot=True)
+
+
 if __name__ == '__main__':
     plot_per_class_f1_from_dir(root_dir=Path(__file__).parent.parent / 'gtex_validation_results')
     plot_per_class_f1_from_dir(root_dir=Path(__file__).parent.parent / 'external_validation_results')
 
-    plot_datasets_f1_from_json(cv_json=Path(__file__).parent.parent / 'validation_models' / 'leaky_pancancer' / 'best_metrics.json',
-                               ext_json=Path(__file__).parent.parent / 'external_validation_results' / 'LeakyPanCancerClassifier' / 'metrics.json',
-                               gtex_json=Path(__file__).parent.parent / 'gtex_validation_results' / 'LeakyPanCancerClassifier' / 'metrics.json',)
+    plot_per_class_auroc_from_dir(root_dir=Path(__file__).parent.parent / 'gtex_validation_results')
+    plot_per_class_auroc_from_dir(root_dir=Path(__file__).parent.parent / 'external_validation_results')
 
+    plot_datasets_f1_from_json(
+        cv_json=Path(__file__).parent.parent / 'validation_models' / 'leaky_pancancer' / 'best_metrics.json',
+        ext_json=Path(
+            __file__).parent.parent / 'external_validation_results' / 'LeakyPanCancerClassifier' / 'metrics.json',
+        gtex_json=Path(
+            __file__).parent.parent / 'gtex_validation_results' / 'LeakyPanCancerClassifier' / 'metrics.json',
+        show_plot=False)

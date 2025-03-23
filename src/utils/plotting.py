@@ -408,7 +408,10 @@ def per_class_auroc_plot(auroc: torch.Tensor,
     plt.figure(figsize=(14, 7))
     auroc = auroc.numpy()
 
-    sn.barplot(x=class_list, y=auroc)
+    ax = sn.barplot(x=class_list, y=auroc)
+    ax.bar_label(ax.containers[0], fontsize=16, fmt='%.3f')
+
+    plt.ylim(top=1.05)
     plt.title('Per-class AUROC')
 
     if save_to is not None:
@@ -427,7 +430,10 @@ def per_class_f1_plot(f1_score: torch.Tensor,
     plt.figure(figsize=(14, 7))
     f1_score = f1_score.cpu().numpy()
 
-    sn.barplot(x=class_list, y=f1_score, color='g')
+    ax = sn.barplot(x=class_list, y=f1_score, color='g')
+    ax.bar_label(ax.containers[0], fontsize=16, fmt='%.3f')
+
+    plt.ylim(top=1.05)
     plt.title('Per-class F1 Score')
 
     if save_to is not None:
