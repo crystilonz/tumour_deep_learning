@@ -93,10 +93,10 @@ as a distributed training script, intended to be run on the dirac tursa cluster.
 This file contains the [HDF5 raw images](https://drive.google.com/file/d/1rxuum9_rk1UoE3rphWJ-skAzYpkk1F_J/view?usp=share_link).
 It is recommended to be saved to `data/TCGA_Lung/hdf5_TCGAFFPE_LUADLUSC_5x_60pc_he_validation.h5`.
 
----
-
 This file contains the [raw vectors for tile images from HPL:](https://drive.google.com/file/d/1KEHA0-AhxQsP_lQE06Jc5S8rzBkfKllV/view).
 It should be saved to `data/TCGA_Lung/TCGA_Lung.h5`.
+
+---
 
 ## Training Classifiers
 ### Normally
