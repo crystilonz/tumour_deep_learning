@@ -119,6 +119,7 @@ def plot_confusion_matrix(cm: np.ndarray | torch.Tensor,
 
     plt.close()
 
+
 def plot_imbalanced_confusion_matrix(cm: np.ndarray | torch.Tensor,
                                      save_to: str | Path = None,
                                      row_index: List[Any] = None,
@@ -160,7 +161,6 @@ def plot_imbalanced_confusion_matrix(cm: np.ndarray | torch.Tensor,
         plt.show()
 
     plt.close()
-
 
 
 def plot_shap_beeswarm_bar(m: torch.nn.Module,
@@ -214,7 +214,7 @@ def plot_shap_all(m: torch.nn.Module,
                   slide_names=None,
                   show_plot: bool = True,
                   save_to_dir: str | Path = None,
-                  plot_waterfall:bool = True,
+                  plot_waterfall: bool = True,
                   use_tqdm=False) -> None:
     if e is None:
         e = shap.DeepExplainer(m, data)
@@ -244,7 +244,6 @@ def plot_shap_all(m: torch.nn.Module,
             plt.show()
         plt.close()
         if use_tqdm: progress.update(1)
-
 
         shap_waterfall_pancancer(m, data, labels,
                                  e=e,
@@ -404,7 +403,6 @@ def per_class_auroc_plot(auroc: torch.Tensor,
                          class_list: list[str],
                          save_to: str | Path = None,
                          show_plot: bool = True) -> None:
-
     plt.figure(figsize=(14, 7))
     auroc = auroc.numpy()
 
@@ -444,6 +442,7 @@ def per_class_f1_plot(f1_score: torch.Tensor,
 
     plt.close()
 
+
 def datasets_f1_plot(f1_score_cv,
                      f1_score_ext,
                      f1_score_gtex,
@@ -477,6 +476,48 @@ def datasets_f1_plot(f1_score_cv,
 
     sn.barplot(data=plt_df, x="Class", y="F1 Score", hue="Dataset", palette='viridis')
     plt.title('Per-class F1 Score Between Datasets')
+    if save_to is not None:
+        plt.savefig(save_to)
+
+    if show_plot and ENV_SHOW_PLOT:
+        plt.show()
+
+    plt.close()
+
+
+def datasets_aurocs_plot(aurocs_cv,
+                         aurocs_ext,
+                         aurocs_gtex,
+                         class_list: list[str],
+                         save_to: str | Path = None,
+                         show_plot: bool = True) -> None:
+    plt.figure(figsize=(14, 7))
+
+    classes = []
+    dataset = []
+    aurocs = []
+
+    for num, cls in enumerate(class_list):
+        classes.append(cls)
+        dataset.append("TCGA")
+        aurocs.append(aurocs_cv[num])
+
+        classes.append(cls)
+        dataset.append("External")
+        aurocs.append(aurocs_ext[num])
+
+        classes.append(cls)
+        dataset.append("GTEx")
+        aurocs.append(aurocs_gtex[num])
+
+    plt_dict = {'Class': classes,
+                'AUROC': aurocs,
+                'Dataset': dataset}
+
+    plt_df = pd.DataFrame(plt_dict)
+
+    sn.barplot(data=plt_df, x="Class", y="AUROC", hue="Dataset", palette='plasma')
+    plt.title('Per-class AUROCs Between Datasets')
     if save_to is not None:
         plt.savefig(save_to)
 
