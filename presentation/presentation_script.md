@@ -10,11 +10,11 @@ The project involves two research questions:
 
 1. How effectively can a model that utilises deep representations of whole slide images presented in the Histomorphological Phenotype Learning (HPL) methodology classify cancerous WSIs to the correct cancer type?
 
-This question deals with classification of the cancer histological slide. We want to classify these slides to the correct type of cancer.
+This question deals with classification of the cancer histopathological slide. We want to classify these slides to the correct type of cancer.
 
 2. How can tile-level annotations be generated, and can these annotations be used to train a model that produces descriptive captions for lung cancer tiles?
 
-This question covers building a model that can describe a tile or a view of lung cancer histological slide. The
+This question covers building a model that can describe a tile or a view of lung cancer histopathological slide. The
 input to the model is basically an image of lung cancer tissue, and the expected output is a short text, describing what is in the image.
 
 Before we move on to the more in-depth topics on the project, I think the introduction of HPL is appropriate.
