@@ -7,6 +7,8 @@ This repository contains code files, scripts, and a portion of data related to t
 dissertation titled _"Identifying Patterns of Tumour Tissue Architecture 
 with Deep Representation Learning"_.
 
+[GitHub Repository](https://github.com/crystilonz/tumour_deep_learning)
+
 ---
 ## Research Goals
 This project covers two different but interconnected questions:
