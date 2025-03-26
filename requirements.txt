@@ -147,14 +147,13 @@ sympy==1.13.1
 tables==3.10.2
 terminado==0.18.1
 thinc==8.3.4
-thinc_apple_ops==1.0.0
 threadpoolctl==3.5.0
 tinycss2==1.4.0
 toolz==1.0.0
 torch==2.5.1
 torchmetrics==1.4.2
 torchtext==0.18.0
-torchvision==0.19.1
+torchvision>=0.19.1
 tornado==6.4.2
 tqdm==4.66.5
 traitlets==5.14.3
