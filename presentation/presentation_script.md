@@ -34,9 +34,9 @@ data will be used to train the tile-captioning model in question 2.
 Next, I will talk about the first question: classifying whole slide images.
 
 As mentioned, for classification purposes, the models will treat the whole slide image vector as the representation of the slide.
-The data was from TCGA or The Cancer Genome Atlas project, comprising a total of 4561 slides, from 10 cancer types.
+The data was from TCGA or The Cancer Genome Atlas project, comprising a total of 10 cancer types.
 
-I built 5 different classifier models for this experiment. There are two different baseline models:
+Multiple classifier architectures were implemented for this experiment. There are two different baseline models:
 1. The Logistic Regression model
 2. The deep Multilayer Perceptron model which refers to this deep typical modern feedforward neural network
 
@@ -46,8 +46,7 @@ activation function layers. The other models aim to improve performance by apply
 2. Introducing dropout regularisation
 
 5-fold cross-validation was performed on all models with the TCGA dataset. The results indicated that there was no significant difference between models in term of performance.
-The performance was not spectacular as you can see on the figures on the right. The best performing model, the leaky variant of
-multilayer perceptron model, achieved an accuracy of 0.689, and F1-score of 0.667.
+The performance was not spectacular as you can see on the figures on the right.
 
 Other than the TCGA dataset, I collected slides from other sources and evaluated the model on this external dataset.
 The models' performances on this dataset were noticeably lower than their performances on the TCGA dataset.
@@ -56,11 +55,7 @@ Additionally, slides were collected from the GTEx source, short for Genetype-Tis
 slides procured here did not contain cancer tissue. These were slides of normal tissue. I actually assessed all classifier models,
 but the results were roughly the same between models, so I will present the leaky version of the multilayer perceptron model here.
 
-The model, which was trained on cancerous tissue slides, was assessed on normal tissue slides. This is called
-out-of-distribution testing, which refers to testing the model on a dataset which deviates substantially from the training set.
-The purpose here was to see the model's behaviour on such dataset.
-
-The model performed decently well on this data. In fact, the performance metrics were roughly comparable to those 
+The model, which was trained on cancerous tissue slides, was assessed on normal tissue slides as out-of-distribution testing. The model performed decently well on this data. In fact, the performance metrics were roughly comparable to those 
 on the external dataset. 
 
 Surprisingly, the models showed systematic confusion patterns. The model seemed to be misclassifying skin samples as breast, and
